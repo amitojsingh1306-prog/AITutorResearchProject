@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+# Runtime data
+chroma_db/*
+!chroma_db/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Environment and editor files
+.env
+frontend/.env
+backend/.env
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

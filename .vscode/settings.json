@@ -1,0 +1,22 @@
+{
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/.pytest_cache": true,
+    "**/.venv": true,
+    "**/.venv 2": true,
+    "**/.venv-mac": true,
+    "**/.venv-windows": true,
+    "**/frontend/node_modules": true,
+    "**/frontend/dist": true,
+    "**/venv": true,
+    "**/venv*.zip": true
+  },
+  "search.exclude": {
+    "**/.venv": true,
+    "**/.venv 2": true,
+    "**/.venv-mac": true,
+    "**/.venv-windows": true,
+    "**/frontend/node_modules": true,
+    "**/frontend/dist": true
+  }
+}

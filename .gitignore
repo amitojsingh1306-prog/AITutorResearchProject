@@ -1,0 +1,27 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local Python environments are OS-specific. Recreate them with the setup scripts.
+.venv/
+.venv 2/
+.venv-mac/
+.venv-windows/
+venv/
+venv.zip
+venv-*.zip
+
+# Local runtime data
+uploads/*
+!uploads/.gitkeep
+chroma_db/*
+!chroma_db/.gitkeep
+
+# Local secrets
+.env
+backend/.env
+
+# Frontend dependencies/build output
+frontend/node_modules/
+frontend/dist/
