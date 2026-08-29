@@ -22,10 +22,16 @@ class ConversationStateAgent:
         re.compile(r"\b(?:wow|awesome|cool|neat|interesting|love that)\b", re.I),
     )
     _greeting_patterns = (
-        re.compile(r"^(?:hello|hi|hey|yo|good morning|good afternoon|good evening)[!. ]*$", re.I),
+        re.compile(
+            r"^(?:hello|hi|hey|yo|good morning|good afternoon|good evening)(?:\s+\w+)?[!. ]*$",
+            re.I,
+        ),
     )
     _understanding_patterns = (
-        re.compile(r"\b(?:i understand|i get it|got it|makes sense|that makes sense|it clicked)\b", re.I),
+        re.compile(
+            r"\b(?:i understand|i get it|got it|makes sense|that makes sense|it clicked|i see|oh i see)\b",
+            re.I,
+        ),
     )
     _confusion_patterns = (
         re.compile(r"\b(?:confused|don't understand|do not understand|stuck|lost|unclear)\b", re.I),

@@ -7,9 +7,6 @@ import {
   SparkIcon,
 } from "./Icons";
 
-const benchmarkLabels = ["LoCoMo", "LongMemEval", "RAGBench", "MT-Bench", "MMLU"];
-const memoryLabels = ["Buffer", "Rolling summary", "Vector summary", "Graph memory"];
-
 interface ChatSidebarProps {
   chats: ChatSummary[];
   selectedChatId: string | null;
@@ -134,42 +131,6 @@ export function ChatSidebar({
             })
           )}
         </nav>
-
-        <div className="border-t border-white/[0.06] px-5 py-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600">
-            Evaluation track
-          </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {benchmarkLabels.map((label) => (
-              <span
-                key={label}
-                className="rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[11px] font-medium text-slate-400"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <p className="mt-4 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-600">
-            Memory layers
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-1.5">
-            {memoryLabels.map((label) => (
-              <span
-                key={label}
-                className="rounded-md bg-accent-500/10 px-2 py-1 text-[11px] text-accent-300"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="border-t border-white/[0.06] px-5 py-4">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <span className="h-2 w-2 rounded-full bg-accent-500 shadow-[0_0_8px_rgba(66,207,168,0.7)]" />
-            Local-first foundation · Phase 1
-          </div>
-        </div>
       </aside>
     </>
   );

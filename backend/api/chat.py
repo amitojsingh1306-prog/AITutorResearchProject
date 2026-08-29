@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, status
+from fastapi.responses import StreamingResponse
 
 from backend.api.dependencies import get_chat_service
 from backend.models.chat import (
@@ -67,3 +68,19 @@ def add_message(
     """Store a user message and the Phase 1 placeholder assistant reply."""
 
     return service.add_message(chat_id, payload, user_id)
+
+
+@router.post("/{chat_id}/message/stream")
+def stream_message(
+    chat_id: str,
+    payload: ChatMessageRequest,
+    service: ChatServiceDependency,
+    user_id: UserIdHeader,
+) -> StreamingResponse:
+    """Store a user message and stream the assistant reply as it is generated."""
+
+    return StreamingResponse(
+        service.stream_message(chat_id, payload, user_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache"},
+    )

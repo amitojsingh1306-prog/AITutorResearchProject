@@ -9,7 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.api.chat import router as chat_router
 from backend.config import Settings, get_settings
 from backend.database.chroma_repository import ChromaChatRepository
+from backend.llm.fallback_client import FallbackLlmClient
 from backend.llm.groq_client import GroqClient
+from backend.llm.ollama_client import OllamaClient
 from backend.services.chat_service import ChatService
 
 
@@ -25,12 +27,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         repository = ChromaChatRepository(app_settings.chroma_path)
-        llm_client = (
-            GroqClient(app_settings.api_key, app_settings.groq_model)
-            if app_settings.api_key
+        ollama_client = (
+            OllamaClient(
+                app_settings.ollama_base_url,
+                app_settings.ollama_model,
+                keep_alive=app_settings.ollama_keep_alive,
+                num_predict=app_settings.ollama_num_predict,
+            )
+            if app_settings.ollama_base_url
             else None
         )
-        app.state.chat_service = ChatService(repository, llm_client)
+        llm_client = ollama_client
+        if app_settings.groq_api_key:
+            groq_client = GroqClient(
+                api_key=app_settings.groq_api_key,
+                model=app_settings.groq_model,
+                base_url=app_settings.groq_base_url,
+                num_predict=app_settings.groq_num_predict,
+            )
+            llm_client = FallbackLlmClient(
+                primary=groq_client,
+                fallback=ollama_client,
+            )
+        app.state.chat_service = ChatService(
+            repository,
+            llm_client,
+            working_memory_limit=app_settings.working_memory_message_limit,
+        )
         yield
 
     app = FastAPI(

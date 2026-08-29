@@ -74,9 +74,6 @@ export function MessageComposer({
           </button>
         </div>
       </div>
-      <p className="mt-2 text-center text-[10px] text-slate-600">
-        Phase 1 uses a placeholder response. Ollama is intentionally not connected.
-      </p>
     </div>
   );
 }

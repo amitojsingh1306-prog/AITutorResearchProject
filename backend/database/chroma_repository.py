@@ -1,6 +1,7 @@
 """ChromaDB persistence adapter for chats, messages, and memory stream."""
 
 import hashlib
+import logging
 import math
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,9 @@ from chromadb.api.models.Collection import Collection
 from backend.models.chat import ChatSummary, Message
 from backend.models.learner import LearnerProfile, MemoryRecord
 from backend.utils.time import parse_timestamp
+
+
+logger = logging.getLogger(__name__)
 
 
 class ChatNotFoundError(LookupError):
@@ -43,10 +47,15 @@ class ChromaChatRepository:
             embedding_function=None,
             metadata={"description": "ChatbotTutorAI long-term learner profiles"},
         )
-        self._memory_stream: Collection = self._client.get_or_create_collection(
-            name="memory_stream",
+        self._memories: Collection = self._client.get_or_create_collection(
+            name="memories",
             embedding_function=None,
             metadata={"description": "ChatbotTutorAI meaningful learner memories"},
+        )
+        logger.warning(
+            "[MEMORY DEBUG] Chroma collection initialized collection=memories count=%s path=%s",
+            self._memories.count(),
+            persistence_path,
         )
 
     def save_chat(self, chat: ChatSummary) -> ChatSummary:
@@ -151,7 +160,14 @@ class ChromaChatRepository:
     def save_memory(self, memory: MemoryRecord) -> MemoryRecord:
         embedding = memory.embedding or self.embed_text(memory.memory)
         memory = memory.model_copy(update={"embedding": embedding})
-        self._memory_stream.upsert(
+        before_count = self._memories.count()
+        logger.warning(
+            "[MEMORY DEBUG] Storing memory collection=memories before_count=%s type=%s content=%s",
+            before_count,
+            memory.type,
+            self._safe_summary(memory.memory),
+        )
+        self._memories.upsert(
             ids=[memory.id],
             documents=[memory.model_dump_json()],
             embeddings=[embedding],
@@ -167,10 +183,15 @@ class ChromaChatRepository:
                 }
             ],
         )
+        logger.warning(
+            "[MEMORY DEBUG] Stored memory collection=memories after_count=%s id=%s",
+            self._memories.count(),
+            memory.id,
+        )
         return memory
 
     def list_memories(self, user_id: str) -> list[MemoryRecord]:
-        result = self._memory_stream.get(
+        result = self._memories.get(
             where={"user_id": user_id},
             include=["documents"],
         )
@@ -188,7 +209,13 @@ class ChromaChatRepository:
         query: str,
         limit: int = 24,
     ) -> list[tuple[MemoryRecord, float]]:
-        result = self._memory_stream.query(
+        logger.warning(
+            "[RETRIEVAL DEBUG] Chroma query collection=memories user_id=%s limit=%s query=%s",
+            user_id,
+            limit,
+            self._safe_summary(query),
+        )
+        result = self._memories.query(
             query_embeddings=[self.embed_text(query)],
             n_results=limit,
             where={"user_id": user_id},
@@ -202,7 +229,23 @@ class ChromaChatRepository:
                 continue
             relevance = max(0.0, 1.0 - float(distance))
             records.append((MemoryRecord.model_validate_json(document), relevance))
+        logger.warning(
+            "[RETRIEVAL DEBUG] Chroma returned collection=memories count=%s total_documents=%s",
+            len(records),
+            self._memories.count(),
+        )
+        for index, (record, relevance) in enumerate(records, start=1):
+            logger.warning(
+                "[RETRIEVAL DEBUG] Chroma raw result %s type=%s relevance=%.4f content=%s",
+                index,
+                record.type,
+                relevance,
+                self._safe_summary(record.memory),
+            )
         return records
+
+    def delete_memory(self, memory_id: str) -> None:
+        self._memories.delete(ids=[memory_id])
 
     @staticmethod
     def embed_text(text: str, dimensions: int = 64) -> list[float]:
@@ -224,6 +267,13 @@ class ChromaChatRepository:
         if magnitude == 0:
             return [0.0] * dimensions
         return [value / magnitude for value in vector]
+
+    @staticmethod
+    def _safe_summary(text: str, max_chars: int = 140) -> str:
+        compact = " ".join(text.strip().split())
+        if len(compact) <= max_chars:
+            return compact
+        return f"{compact[: max_chars - 1].rstrip()}..."
 
     @staticmethod
     def _chat_from_metadata(metadata: dict[str, Any]) -> ChatSummary:

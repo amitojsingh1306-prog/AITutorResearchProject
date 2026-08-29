@@ -4,7 +4,7 @@ import { chatApi } from "./api/chatApi";
 import { AuthPanel } from "./components/AuthPanel";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { ChatWindow } from "./components/ChatWindow";
-import type { ChatDetail, ChatSummary } from "./types/chat";
+import type { ChatDetail, ChatSummary, Message } from "./types/chat";
 import type { UserProfile } from "./types/user";
 
 const USER_STORAGE_KEY = "chatbot-tutor-user";
@@ -126,27 +126,107 @@ export default function App() {
 
     setIsSending(true);
     setError(null);
+    let optimisticMessage: Message | null = null;
+    let receivedUserMessage = false;
+    let assistantMessageId: string | null = null;
     try {
       const targetChat = activeChat ?? (await createChat());
       if (!targetChat) return;
 
       if (!user) return;
 
-      const response = await chatApi.sendMessage(targetChat.id, content, user.id);
+      optimisticMessage = {
+        id: `pending-${crypto.randomUUID()}`,
+        chat_id: targetChat.id,
+        user_id: user.id,
+        role: "user",
+        content,
+        timestamp: new Date().toISOString(),
+        session_id: targetChat.session_id,
+      };
+
       setActiveChat((current) => ({
         ...(current ?? targetChat),
-        ...response.chat,
         messages: [
           ...(current?.messages ?? targetChat.messages),
-          response.user_message,
-          response.assistant_message,
+          optimisticMessage as Message,
         ],
       }));
-      setChats((current) => [
-        response.chat,
-        ...current.filter((chat) => chat.id !== response.chat.id),
-      ]);
+
+      await chatApi.streamMessage(targetChat.id, content, user.id, {
+        onUserMessage: (message) => {
+          receivedUserMessage = true;
+          setActiveChat((current) => ({
+            ...(current ?? targetChat),
+            messages: [
+              ...(current?.messages ?? targetChat.messages).filter(
+                (currentMessage) => currentMessage.id !== optimisticMessage?.id,
+              ),
+              message,
+            ],
+          }));
+        },
+        onAssistantMessageStart: (message) => {
+          assistantMessageId = message.id;
+          setActiveChat((current) => ({
+            ...(current ?? targetChat),
+            messages: [...(current?.messages ?? targetChat.messages), message],
+          }));
+        },
+        onChunk: (chunk) => {
+          if (!assistantMessageId) return;
+          setActiveChat((current) =>
+            current
+              ? {
+                  ...current,
+                  messages: current.messages.map((message) =>
+                    message.id === assistantMessageId
+                      ? { ...message, content: `${message.content}${chunk}` }
+                      : message,
+                  ),
+                }
+              : current,
+          );
+        },
+        onDone: ({ assistant_message, chat }) => {
+          setActiveChat((current) => ({
+            ...(current ?? targetChat),
+            ...chat,
+            messages: (current?.messages ?? targetChat.messages).map((message) =>
+              message.id === assistant_message.id ? assistant_message : message,
+            ),
+          }));
+          setChats((current) => [
+            chat,
+            ...current.filter((currentChat) => currentChat.id !== chat.id),
+          ]);
+        },
+      });
     } catch (requestError) {
+      if (optimisticMessage && !receivedUserMessage) {
+        setActiveChat((current) =>
+          current
+            ? {
+                ...current,
+                messages: current.messages.filter(
+                  (message) => message.id !== optimisticMessage?.id,
+                ),
+              }
+            : current,
+        );
+      }
+      if (assistantMessageId) {
+        setActiveChat((current) =>
+          current
+            ? {
+                ...current,
+                messages: current.messages.filter(
+                  (message) => message.id !== assistantMessageId,
+                ),
+              }
+            : current,
+        );
+      }
       setError(userFriendlyError(requestError, "The message could not be sent."));
     } finally {
       setIsSending(false);
