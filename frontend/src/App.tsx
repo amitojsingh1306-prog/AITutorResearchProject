@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { chatApi } from "./api/chatApi";
+import { profileApi } from "./api/profileApi";
 import { AuthPanel } from "./components/AuthPanel";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { ChatWindow } from "./components/ChatWindow";
+import { LoadingBubble } from "./components/LoadingBubble";
+import { OnboardingSurvey } from "./components/OnboardingSurvey";
 import type { ChatDetail, ChatSummary, Message } from "./types/chat";
 import type { UserProfile } from "./types/user";
 
@@ -31,6 +34,8 @@ function userFriendlyError(error: unknown, fallback: string): string {
 
 export default function App() {
   const [user, setUser] = useState<UserProfile | null>(() => loadStoredUser());
+  // null = "haven't checked yet"; true/false once the profile lookup returns.
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [activeChat, setActiveChat] = useState<ChatDetail | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -58,6 +63,23 @@ export default function App() {
     },
     [user],
   );
+
+  useEffect(() => {
+    async function checkOnboarding() {
+      if (!user) {
+        setOnboardingComplete(null);
+        return;
+      }
+      try {
+        const profile = await profileApi.get(user.id);
+        setOnboardingComplete(profile.onboarding_complete);
+      } catch {
+        // Backend unreachable — don't block the user on a profile check.
+        setOnboardingComplete(true);
+      }
+    }
+    void checkOnboarding();
+  }, [user]);
 
   useEffect(() => {
     async function loadChats() {
@@ -89,11 +111,17 @@ export default function App() {
     setChats([]);
     setActiveChat(null);
     setError(null);
+    setOnboardingComplete(null);
+    // Persists the identity server-side and sends the login confirmation
+    // email. Best-effort: a failed/slow email should never block sign-in,
+    // and the onboarding check above independently decides what to show.
+    void profileApi.login(profile.id, profile.name, profile.email).catch(() => undefined);
   }
 
   function handleSignOut() {
     window.localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
+    setOnboardingComplete(null);
     setChats([]);
     setActiveChat(null);
     setError(null);
@@ -235,6 +263,24 @@ export default function App() {
 
   if (!user) {
     return <AuthPanel onSubmit={handleAuth} />;
+  }
+
+  if (onboardingComplete === null) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-ink-900 text-slate-100">
+        <LoadingBubble />
+      </main>
+    );
+  }
+
+  if (!onboardingComplete) {
+    return (
+      <OnboardingSurvey
+        userId={user.id}
+        defaultName={user.name}
+        onComplete={() => setOnboardingComplete(true)}
+      />
+    );
   }
 
   return (
