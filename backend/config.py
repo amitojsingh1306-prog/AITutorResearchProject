@@ -54,6 +54,30 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("OLLAMA_NUM_PREDICT", "CHATBOT_OLLAMA_NUM_PREDICT"),
     )
     working_memory_message_limit: int = 10
+    smtp_host: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SMTP_HOST", "CHATBOT_SMTP_HOST"),
+    )
+    smtp_port: int = Field(
+        default=587,
+        validation_alias=AliasChoices("SMTP_PORT", "CHATBOT_SMTP_PORT"),
+    )
+    smtp_username: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SMTP_USERNAME", "CHATBOT_SMTP_USERNAME"),
+    )
+    smtp_password: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SMTP_PASSWORD", "CHATBOT_SMTP_PASSWORD"),
+    )
+    smtp_from_email: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SMTP_FROM_EMAIL", "CHATBOT_SMTP_FROM_EMAIL"),
+    )
+    smtp_use_tls: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("SMTP_USE_TLS", "CHATBOT_SMTP_USE_TLS"),
+    )
 
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",

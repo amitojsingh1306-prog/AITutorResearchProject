@@ -1,0 +1,2 @@
+chroma-hnswlib==0.7.5
+

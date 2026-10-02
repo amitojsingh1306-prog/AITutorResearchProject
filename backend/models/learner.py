@@ -11,6 +11,10 @@ class LearnerProfile(BaseModel):
     """Long-term profile used to personalize future tutoring turns."""
 
     user_id: str
+    name: str | None = None
+    email: str | None = None
+    field_of_study: str | None = None
+    onboarding_complete: bool = False
     learning_goals: list[str] = Field(default_factory=list)
     completed_topics: list[str] = Field(default_factory=list)
     current_topics: list[str] = Field(default_factory=list)

@@ -6,13 +6,17 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.api.auth import router as auth_router
 from backend.api.chat import router as chat_router
+from backend.api.profile import router as profile_router
 from backend.config import Settings, get_settings
 from backend.database.chroma_repository import ChromaChatRepository
 from backend.llm.fallback_client import FallbackLlmClient
 from backend.llm.groq_client import GroqClient
 from backend.llm.ollama_client import OllamaClient
 from backend.services.chat_service import ChatService
+from backend.services.profile_service import ProfileService
+from backend.utils.email_service import EmailService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -54,6 +58,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             llm_client,
             working_memory_limit=app_settings.working_memory_message_limit,
         )
+        app.state.profile_service = ProfileService(
+            repository,
+            EmailService(app_settings),
+        )
         yield
 
     app = FastAPI(
@@ -69,6 +77,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.include_router(auth_router)
+    app.include_router(profile_router)
     app.include_router(chat_router)
 
     @app.get("/health", tags=["system"])
