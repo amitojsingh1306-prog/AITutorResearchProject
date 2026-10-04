@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.auth import router as auth_router
 from backend.api.chat import router as chat_router
+from backend.api.memory_debug import router as memory_debug_router
 from backend.api.profile import router as profile_router
 from backend.config import Settings, get_settings
 from backend.database.chroma_repository import ChromaChatRepository
@@ -80,6 +81,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(profile_router)
     app.include_router(chat_router)
+    app.include_router(memory_debug_router)
 
     @app.get("/health", tags=["system"])
     def health_check() -> dict[str, str]:

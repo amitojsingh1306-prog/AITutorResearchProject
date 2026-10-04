@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1460" viewBox="0 0 1800 1460">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { fill: #0f172a; font: 800 42px Inter, Arial, sans-serif; }
+      .subtitle { fill: #475569; font: 400 18px Inter, Arial, sans-serif; }
+      .section { fill: #0f172a; font: 800 22px Inter, Arial, sans-serif; }
+      .nodeTitle { fill: #0f172a; font: 800 19px Inter, Arial, sans-serif; }
+      .file { fill: #1e293b; font: 700 14px Inter, Arial, sans-serif; }
+      .body { fill: #334155; font: 400 13px Inter, Arial, sans-serif; }
+      .small { fill: #64748b; font: 400 12px Inter, Arial, sans-serif; }
+      .legend { fill: #334155; font: 700 14px Inter, Arial, sans-serif; }
+      .root { fill: #e0f2fe; stroke: #0284c7; stroke-width: 3; rx: 26; }
+      .active { fill: #dcfce7; stroke: #16a34a; stroke-width: 2.4; rx: 20; }
+      .optional { fill: #fef3c7; stroke: #d97706; stroke-width: 2.4; rx: 20; }
+      .inactive { fill: #fee2e2; stroke: #dc2626; stroke-width: 2.4; rx: 20; }
+      .paper { fill: #dbeafe; stroke: #2563eb; stroke-width: 2.4; rx: 20; }
+      .paperTitle { fill: #1e3a8a; font: 800 19px Inter, Arial, sans-serif; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 24; }
+      .note { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1.6; rx: 18; }
+      .line { stroke: #475569; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .greenLine { stroke: #16a34a; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .amberLine { stroke: #d97706; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 9 7; }
+      .labelBox { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.4; rx: 12; }
+      .label { fill: #334155; font: 700 12px Inter, Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1800" height="1460" />
+
+  <text x="70" y="72" class="title">ChatbotTutorAI Detailed Tree Architecture</text>
+  <text x="72" y="108" class="subtitle">Tree view of how the frontend, backend, memory, model provider, and embedding debug system connect.</text>
+
+  <rect x="1160" y="36" width="570" height="104" class="panel" />
+  <circle cx="1200" cy="68" r="12" fill="#16a34a" />
+  <text x="1220" y="73" class="legend">Green = implemented and active in current demo</text>
+  <circle cx="1200" cy="96" r="12" fill="#d97706" />
+  <text x="1220" y="101" class="legend">Amber = implemented but optional/manual/fallback</text>
+  <circle cx="1200" cy="124" r="12" fill="#dc2626" />
+  <text x="1220" y="129" class="legend">Red = not active in stable demo or known limitation</text>
+  <circle cx="1585" cy="68" r="12" fill="#2563eb" />
+  <text x="1605" y="73" class="legend">Blue = research-paper-to-code mapping</text>
+
+  <rect x="610" y="165" width="580" height="118" class="root" />
+  <text x="740" y="206" class="section">Hybrid Memory Tutor System</text>
+  <text x="672" y="236" class="body">User asks tutor questions, chat is saved, memory is recalled, and an LLM generates the response.</text>
+  <text x="775" y="260" class="file">Root folder: AITutor/</text>
+
+  <path class="line" d="M900 283 V342" />
+  <path class="line" d="M170 342 H1630" />
+  <path class="greenLine" d="M170 342 V395" />
+  <path class="greenLine" d="M515 342 V395" />
+  <path class="greenLine" d="M900 342 V395" />
+  <path class="amberLine" d="M1285 342 V395" />
+  <path class="amberLine" d="M1630 342 V395" />
+
+  <rect x="70" y="395" width="250" height="120" class="active" />
+  <text x="105" y="432" class="nodeTitle">Frontend</text>
+  <text x="105" y="462" class="file">frontend/src/</text>
+  <text x="105" y="489" class="body">What the user sees and types into.</text>
+
+  <rect x="390" y="395" width="250" height="120" class="active" />
+  <text x="425" y="432" class="nodeTitle">Backend API</text>
+  <text x="425" y="462" class="file">backend/main.py</text>
+  <text x="425" y="489" class="body">Starts FastAPI and registers routes.</text>
+
+  <rect x="760" y="395" width="280" height="120" class="active" />
+  <text x="795" y="432" class="nodeTitle">Chat Orchestration</text>
+  <text x="795" y="462" class="file">backend/services/</text>
+  <text x="795" y="489" class="body">Controls message flow and streaming.</text>
+
+  <rect x="1145" y="395" width="280" height="120" class="optional" />
+  <text x="1180" y="432" class="nodeTitle">LLM Providers</text>
+  <text x="1180" y="462" class="file">backend/llm/</text>
+  <text x="1180" y="489" class="body">Groq primary; Ollama/Qwen supported.</text>
+
+  <rect x="1505" y="395" width="250" height="120" class="optional" />
+  <text x="1540" y="432" class="nodeTitle">Embedding Debug</text>
+  <text x="1540" y="462" class="file">Chroma + debug UI</text>
+  <text x="1540" y="489" class="body">Shows vector memory evidence.</text>
+
+  <path class="greenLine" d="M195 515 V565" />
+  <path class="greenLine" d="M60 565 H375" />
+  <path class="greenLine" d="M60 565 V620" />
+  <path class="greenLine" d="M195 565 V620" />
+  <path class="greenLine" d="M375 565 V620" />
+
+  <rect x="20" y="620" width="210" height="150" class="active" />
+  <text x="48" y="654" class="nodeTitle">App Shell</text>
+  <text x="48" y="682" class="file">App.tsx</text>
+  <text x="48" y="706" class="body">Loads logged-in user and shows tutor workspace.</text>
+  <text x="48" y="746" class="small">Onboarding removed for stable demo.</text>
+
+  <rect x="260" y="620" width="230" height="150" class="active" />
+  <text x="288" y="654" class="nodeTitle">Chat Screen</text>
+  <text x="288" y="682" class="file">ChatWindow.tsx</text>
+  <text x="288" y="706" class="file">MessageComposer.tsx</text>
+  <text x="288" y="732" class="body">Renders messages and sends input.</text>
+
+  <rect x="20" y="800" width="210" height="130" class="active" />
+  <text x="48" y="834" class="nodeTitle">API Client</text>
+  <text x="48" y="862" class="file">api/chatApi.ts</text>
+  <text x="48" y="888" class="body">Calls backend and reads streaming chunks.</text>
+
+  <rect x="260" y="800" width="230" height="130" class="optional" />
+  <text x="288" y="834" class="nodeTitle">Memory Panel</text>
+  <text x="288" y="862" class="file">MemoryDebugPanel.tsx</text>
+  <text x="288" y="888" class="body">Manual view for Chroma embeddings.</text>
+
+  <path class="greenLine" d="M515 515 V565" />
+  <path class="greenLine" d="M515 565 H660" />
+  <path class="greenLine" d="M660 565 V620" />
+  <path class="greenLine" d="M660 770 V800" />
+
+  <rect x="535" y="620" width="250" height="150" class="active" />
+  <text x="565" y="654" class="nodeTitle">Chat Routes</text>
+  <text x="565" y="682" class="file">api/chat.py</text>
+  <text x="565" y="708" class="body">Handles create chat, list chat, fetch chat, and message stream.</text>
+
+  <rect x="535" y="800" width="250" height="130" class="optional" />
+  <text x="565" y="834" class="nodeTitle">Memory Debug Route</text>
+  <text x="565" y="862" class="file">api/memory_debug.py</text>
+  <text x="565" y="888" class="body">Returns embedding previews from Chroma.</text>
+
+  <path class="greenLine" d="M900 515 V565" />
+  <path class="greenLine" d="M945 565 H1220" />
+  <path class="greenLine" d="M945 565 V620" />
+  <path class="greenLine" d="M1220 565 V620" />
+  <path class="greenLine" d="M945 770 V800" />
+  <path class="greenLine" d="M1220 770 V800" />
+
+  <rect x="820" y="620" width="250" height="150" class="active" />
+  <text x="850" y="654" class="nodeTitle">Chat Service</text>
+  <text x="850" y="682" class="file">chat_service.py</text>
+  <text x="850" y="708" class="body">Saves user turn, builds memory context, calls LLM, streams reply.</text>
+
+  <rect x="1095" y="620" width="250" height="150" class="active" />
+  <text x="1125" y="654" class="nodeTitle">Repository Adapter</text>
+  <text x="1125" y="682" class="file">chroma_repository.py</text>
+  <text x="1125" y="708" class="body">Single read-write layer for chats, messages, profiles, and Chroma access.</text>
+
+  <rect x="820" y="800" width="250" height="130" class="active" />
+  <text x="850" y="834" class="nodeTitle">Memory Context</text>
+  <text x="850" y="862" class="file">_memory_lines()</text>
+  <text x="850" y="888" class="body">Finds useful user facts from JSON history.</text>
+
+  <rect x="1095" y="800" width="250" height="130" class="active" />
+  <text x="1125" y="834" class="nodeTitle">JSON Storage</text>
+  <text x="1125" y="862" class="file">chroma_db/*.json</text>
+  <text x="1125" y="888" class="body">Current stable source of truth for chat retention.</text>
+
+  <path class="amberLine" d="M1285 515 V565" />
+  <path class="greenLine" d="M1488 565 V620" />
+  <path class="amberLine" d="M1488 770 V800" />
+  <path class="amberLine" d="M1488 930 V960" />
+
+  <rect x="1358" y="620" width="260" height="150" class="active" />
+  <text x="1388" y="654" class="nodeTitle">Groq Primary</text>
+  <text x="1388" y="682" class="file">groq_client.py</text>
+  <text x="1388" y="708" class="body">Fast cloud response provider used in the stable demo.</text>
+
+  <rect x="1358" y="800" width="260" height="130" class="optional" />
+  <text x="1388" y="834" class="nodeTitle">Ollama / Qwen Fallback</text>
+  <text x="1388" y="862" class="file">ollama_client.py</text>
+  <text x="1388" y="888" class="body">Code support exists, but local runtime was unstable on this Mac.</text>
+
+  <rect x="1358" y="960" width="260" height="110" class="inactive" />
+  <text x="1388" y="994" class="nodeTitle">Not Active Now</text>
+  <text x="1388" y="1022" class="file">Qwen as primary</text>
+  <text x="1388" y="1048" class="body">Kept as fallback/research requirement evidence.</text>
+
+  <path class="amberLine" d="M1630 515 V565" />
+  <path class="amberLine" d="M1682 565 V620" />
+  <path class="amberLine" d="M1682 770 V800" />
+  <path class="amberLine" d="M1682 930 V960" />
+
+  <rect x="1585" y="620" width="195" height="150" class="optional" />
+  <text x="1612" y="654" class="nodeTitle">Sync Script</text>
+  <text x="1612" y="682" class="file">sync_json_...</text>
+  <text x="1612" y="708" class="body">Copies JSON messages into Chroma embeddings.</text>
+
+  <rect x="1585" y="800" width="195" height="130" class="optional" />
+  <text x="1612" y="834" class="nodeTitle">Chroma Index</text>
+  <text x="1612" y="862" class="file">json_message_embeddings</text>
+  <text x="1612" y="888" class="body">Stores vector previews for RAG evidence.</text>
+
+  <rect x="1585" y="960" width="195" height="110" class="inactive" />
+  <text x="1612" y="994" class="nodeTitle">Not Live Store</text>
+  <text x="1612" y="1022" class="file">Chroma primary memory</text>
+  <text x="1612" y="1048" class="body">Disabled to avoid freezes.</text>
+
+  <rect x="680" y="310" width="435" height="36" class="labelBox" />
+  <text x="706" y="333" class="label">Tree root splits into code responsibility areas</text>
+
+  <rect x="60" y="1110" width="1680" height="300" class="panel" />
+  <text x="90" y="1153" class="section">Research Paper to Code Mapping</text>
+  <text x="90" y="1180" class="subtitle">Blue boxes map each research paper idea to the project files that implement, simulate, or demonstrate it.</text>
+
+  <rect x="90" y="1210" width="500" height="80" class="paper" />
+  <text x="120" y="1244" class="paperTitle">&lt;Mem0&gt;</text>
+  <text x="120" y="1270" class="file">chat_service.py, chroma_repository.py</text>
+
+  <rect x="650" y="1210" width="500" height="80" class="paper" />
+  <text x="680" y="1244" class="paperTitle">&lt;LoCoMo memory&gt;</text>
+  <text x="680" y="1270" class="file">messages.json, chat_service.py</text>
+
+  <rect x="1210" y="1210" width="500" height="80" class="paper" />
+  <text x="1240" y="1244" class="paperTitle">&lt;RAG for knowledge intensive layer&gt;</text>
+  <text x="1240" y="1270" class="file">sync_json_memory_to_chroma.py, retriever.py, memory_debug.py</text>
+
+  <rect x="90" y="1310" width="500" height="80" class="paper" />
+  <text x="120" y="1344" class="paperTitle">&lt;MemGPT&gt;</text>
+  <text x="120" y="1370" class="file">working_memory.py, chat_service.py</text>
+
+  <rect x="650" y="1310" width="500" height="80" class="paper" />
+  <text x="680" y="1344" class="paperTitle">&lt;A-MEM&gt;</text>
+  <text x="680" y="1370" class="file">memory_manager.py, importance_scoring.py</text>
+
+  <rect x="1210" y="1310" width="500" height="80" class="paper" />
+  <text x="1240" y="1344" class="paperTitle">&lt;LongMemEval&gt;</text>
+  <text x="1240" y="1370" class="file">test_chat_api.py, benchmarks-and-memory.md</text>
+</svg>

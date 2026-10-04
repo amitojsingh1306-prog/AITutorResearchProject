@@ -1,6 +1,7 @@
 """ChromaDB persistence adapter for chats, messages, and memory stream."""
 
 import hashlib
+import json
 import logging
 import math
 from datetime import datetime
@@ -31,6 +32,9 @@ class ChromaChatRepository:
 
     def __init__(self, persistence_path: Path) -> None:
         persistence_path.mkdir(parents=True, exist_ok=True)
+        self._profile_file = persistence_path / "learner_profiles.json"
+        self._chat_file = persistence_path / "chats.json"
+        self._message_file = persistence_path / "messages.json"
         self._client = chromadb.PersistentClient(path=str(persistence_path))
         self._chats: Collection = self._client.get_or_create_collection(
             name="chats",
@@ -59,103 +63,86 @@ class ChromaChatRepository:
         )
 
     def save_chat(self, chat: ChatSummary) -> ChatSummary:
-        metadata = {
-            "chat_id": chat.id,
-            "title": chat.title,
-            "user_id": chat.user_id,
-            "session_id": chat.session_id,
-            "created_at": chat.created_at.isoformat(),
-            "updated_at": chat.updated_at.isoformat(),
-        }
-        self._chats.upsert(
-            ids=[chat.id],
-            documents=[chat.title],
-            # Phase 1 performs no semantic search. A fixed vector keeps ChromaDB
-            # in storage-only mode without loading its default ONNX embedder.
-            embeddings=[[0.0]],
-            metadatas=[metadata],
-        )
+        chats = self._read_json_file(self._chat_file)
+        chats[chat.id] = chat.model_dump_json()
+        self._write_json_file(self._chat_file, chats)
         return chat
 
     def list_chats(self, user_id: str) -> list[ChatSummary]:
-        result = self._chats.get(where={"user_id": user_id}, include=["metadatas"])
         chats = [
-            self._chat_from_metadata(metadata)
-            for metadata in result.get("metadatas") or []
-            if metadata is not None
+            ChatSummary.model_validate_json(document)
+            for document in self._read_json_file(self._chat_file).values()
         ]
+        chats = [chat for chat in chats if chat.user_id == user_id]
         return sorted(chats, key=lambda item: item.updated_at, reverse=True)
 
     def get_chat(self, chat_id: str, user_id: str) -> ChatSummary:
-        result = self._chats.get(ids=[chat_id], include=["metadatas"])
-        metadata_items = result.get("metadatas") or []
-        if not metadata_items or metadata_items[0] is None:
+        document = self._read_json_file(self._chat_file).get(chat_id)
+        if not document:
             raise ChatNotFoundError(chat_id)
-        chat = self._chat_from_metadata(metadata_items[0])
+        chat = ChatSummary.model_validate_json(document)
         if chat.user_id != user_id:
             raise ChatNotFoundError(chat_id)
         return chat
 
     def save_message(self, message: Message) -> Message:
-        metadata = {
-            "chat_id": message.chat_id,
-            "message_id": message.id,
-            "user_id": message.user_id,
-            "role": message.role,
-            "timestamp": message.timestamp.isoformat(),
-            "session_id": message.session_id,
-        }
-        self._messages.add(
-            ids=[message.id],
-            documents=[message.content],
-            embeddings=[[0.0]],
-            metadatas=[metadata],
-        )
+        messages = self._read_json_file(self._message_file)
+        messages[message.id] = message.model_dump_json()
+        self._write_json_file(self._message_file, messages)
         return message
 
     def list_messages(self, chat_id: str, user_id: str) -> list[Message]:
-        result = self._messages.get(
-            where={"$and": [{"chat_id": chat_id}, {"user_id": user_id}]},
-            include=["documents", "metadatas"],
-        )
-        documents = result.get("documents") or []
-        metadatas = result.get("metadatas") or []
         messages = [
-            self._message_from_record(document, metadata)
-            for document, metadata in zip(documents, metadatas, strict=True)
-            if metadata is not None
+            Message.model_validate_json(document)
+            for document in self._read_json_file(self._message_file).values()
+        ]
+        messages = [
+            message
+            for message in messages
+            if message.chat_id == chat_id and message.user_id == user_id
         ]
         return sorted(messages, key=lambda item: item.timestamp)
 
     def list_user_messages(self, user_id: str) -> list[Message]:
-        result = self._messages.get(
-            where={"user_id": user_id},
-            include=["documents", "metadatas"],
-        )
-        documents = result.get("documents") or []
-        metadatas = result.get("metadatas") or []
         messages = [
-            self._message_from_record(document, metadata)
-            for document, metadata in zip(documents, metadatas, strict=True)
-            if metadata is not None
+            Message.model_validate_json(document)
+            for document in self._read_json_file(self._message_file).values()
         ]
+        messages = [message for message in messages if message.user_id == user_id]
         return sorted(messages, key=lambda item: item.timestamp)
 
     def get_learner_profile(self, user_id: str) -> LearnerProfile:
-        result = self._learner_profiles.get(ids=[user_id], include=["documents"])
-        documents = result.get("documents") or []
-        if not documents:
+        profiles = self._read_profile_file()
+        document = profiles.get(user_id)
+        if not document:
             return LearnerProfile(user_id=user_id)
-        return LearnerProfile.model_validate_json(documents[0])
+        return LearnerProfile.model_validate_json(document)
 
     def save_learner_profile(self, profile: LearnerProfile) -> LearnerProfile:
-        self._learner_profiles.upsert(
-            ids=[profile.user_id],
-            documents=[profile.model_dump_json()],
-            embeddings=[[0.0]],
-            metadatas=[{"user_id": profile.user_id}],
-        )
+        profiles = self._read_profile_file()
+        profiles[profile.user_id] = profile.model_dump_json()
+        self._profile_file.write_text(json.dumps(profiles, indent=2), encoding="utf-8")
         return profile
+
+    def _read_profile_file(self) -> dict[str, str]:
+        return self._read_json_file(self._profile_file)
+
+    @staticmethod
+    def _read_json_file(path: Path) -> dict[str, str]:
+        if not path.exists():
+            return {}
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            logger.warning("[PROFILE DEBUG] Could not read JSON store %s; starting empty", path)
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+        return {str(key): str(value) for key, value in payload.items()}
+
+    @staticmethod
+    def _write_json_file(path: Path, payload: dict[str, str]) -> None:
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def save_memory(self, memory: MemoryRecord) -> MemoryRecord:
         embedding = memory.embedding or self.embed_text(memory.memory)
@@ -246,6 +233,16 @@ class ChromaChatRepository:
 
     def delete_memory(self, memory_id: str) -> None:
         self._memories.delete(ids=[memory_id])
+
+    def get_json_embedding_collection(self) -> Collection:
+        return self._client.get_or_create_collection(
+            name="json_message_embeddings",
+            embedding_function=None,
+            metadata={
+                "description": "Derived embeddings copied from JSON chat history",
+                "source": str(self._message_file),
+            },
+        )
 
     @staticmethod
     def embed_text(text: str, dimensions: int = 64) -> list[float]:

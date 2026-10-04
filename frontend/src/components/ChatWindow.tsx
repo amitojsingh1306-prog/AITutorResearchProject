@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ChatDetail } from "../types/chat";
 import type { UserProfile } from "../types/user";
 import { BookIcon, MenuIcon, SparkIcon } from "./Icons";
 import { LoadingBubble } from "./LoadingBubble";
+import { MemoryDebugPanel } from "./MemoryDebugPanel";
 import { MessageBubble } from "./MessageBubble";
 import { MessageComposer } from "./MessageComposer";
 
@@ -31,6 +32,7 @@ export function ChatWindow({
   onSend,
 }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isMemoryOpen, setIsMemoryOpen] = useState(false);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,6 +58,13 @@ export function ChatWindow({
           </p>
         </div>
         <div className="hidden min-w-0 items-center gap-3 sm:flex">
+          <button
+            type="button"
+            className="rounded-lg border border-accent-400/20 bg-accent-500/10 px-3 py-1.5 text-xs font-medium text-accent-200 transition hover:border-accent-300/40 hover:bg-accent-500/15"
+            onClick={() => setIsMemoryOpen(true)}
+          >
+            Memory
+          </button>
           <div className="min-w-0 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-[11px] text-slate-500">
             <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-accent-400" />
             <span className="text-slate-300">{user.name}</span>
@@ -113,6 +122,7 @@ export function ChatWindow({
         errorMessage={errorMessage}
         onSend={onSend}
       />
+      {isMemoryOpen && <MemoryDebugPanel onClose={() => setIsMemoryOpen(false)} />}
     </main>
   );
 }
