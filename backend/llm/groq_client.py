@@ -22,6 +22,7 @@ class GroqClient:
     base_url: str = "https://api.groq.com/openai/v1"
     num_predict: int = 700
     timeout_seconds: float = 60.0
+    temperature: float = 0.7
 
     def generate_reply(
         self,
@@ -36,7 +37,7 @@ class GroqClient:
                 },
                 *self._messages_for_groq(messages),
             ],
-            temperature=0.7,
+            temperature=self.temperature,
         )
 
     def stream_reply(
@@ -52,7 +53,7 @@ class GroqClient:
                 },
                 *self._messages_for_groq(messages),
             ],
-            temperature=0.7,
+            temperature=self.temperature,
         )
 
     def generate_text(
@@ -83,6 +84,8 @@ class GroqClient:
                     "max_tokens": self.num_predict,
                 },
                 timeout=self.timeout_seconds,
+                trust_env=False,
+                follow_redirects=False,
             )
         except httpx.HTTPError as error:
             raise GroqClientError(f"Groq request failed: {error}") from error
@@ -119,6 +122,8 @@ class GroqClient:
                     "max_tokens": self.num_predict,
                 },
                 timeout=self.timeout_seconds,
+                trust_env=False,
+                follow_redirects=False,
             )
             with stream as response:
                 yield from self._iter_stream_response(response)

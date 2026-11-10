@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "record_id": "",
+  "memory_type": "image_ocr",
+  "user_id": "local-user",
+  "chat_id": null,
+  "created_at": "",
+  "image": {
+    "original_filename": "",
+    "stored_path": "",
+    "sha256": "",
+    "media_type": "",
+    "size_bytes": 0
+  },
+  "ocr": {
+    "text": "",
+    "words": [],
+    "elapsed_ms": 0,
+    "model_sha256": "",
+    "language": "eng",
+    "engine": "tesseract-lstm"
+  },
+  "generation": {
+    "question": null,
+    "model": null,
+    "answer": null,
+    "status": "not_requested",
+    "error": null
+  },
+  "retrieval": {
+    "indexed_in_chroma": false
+  }
+}

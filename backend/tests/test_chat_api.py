@@ -1,4 +1,10 @@
-"""End-to-end API tests using an isolated persistent ChromaDB."""
+"""Legacy agent-contract compatibility tests with isolated HTTP storage.
+
+The active local memory pipeline is exercised by test_rolling_graph,
+test_memory_mutations, test_panel_privacy, and the real-service verifiers.
+This suite retains its original agent assertions and explicitly wires that
+older orchestrator rather than inadvertently calling LM Studio.
+"""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -158,15 +164,23 @@ def build_client(
         chroma_path=database_path,
         groq_api_key=None,
         ollama_base_url=None,
+        lmstudio_base_url='',
+        memory_configuration='buffer',
     )
     with TestClient(create_app(settings)) as client:
-        if llm_client is not None:
-            service = client.app.state.chat_service
-            client.app.state.chat_service = ChatService(
-                service._repository,  # type: ignore[attr-defined]
-                llm_client,  # type: ignore[arg-type]
-                working_memory_limit=settings.working_memory_message_limit,
-            )
+        class LegacyAgentChatService(ChatService):
+            def _direct_reply(self, message):
+                return self._orchestrator.generate_reply(message.chat_id,message)
+
+            def _direct_stream_reply(self, message):
+                yield from self._orchestrator.stream_reply(message.chat_id,message)
+
+        service = client.app.state.chat_service
+        client.app.state.chat_service = LegacyAgentChatService(
+            service._repository,
+            llm_client,
+            working_memory_limit=settings.working_memory_message_limit,
+        )
         yield client
 
 

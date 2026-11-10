@@ -1,0 +1,3 @@
+-r requirements-dev.txt
+nltk==3.10.4
+regex==2026.9.29

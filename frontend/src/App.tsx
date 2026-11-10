@@ -9,17 +9,25 @@ import type { ChatDetail, ChatSummary, Message } from "./types/chat";
 import type { UserProfile } from "./types/user";
 
 const USER_STORAGE_KEY = "chatbot-tutor-user";
+const LOCAL_USER: UserProfile = {
+  id: "local-user",
+  name: "Local User",
+  email: "",
+};
 const RATE_LIMIT_MESSAGE = "Your rate limit will reset in 24 hrs.";
 
 function loadStoredUser(): UserProfile | null {
   const stored = window.localStorage.getItem(USER_STORAGE_KEY);
-  if (!stored) return null;
+  if (!stored) return LOCAL_USER;
 
   try {
-    return JSON.parse(stored) as UserProfile;
+    const profile = JSON.parse(stored) as UserProfile;
+    return typeof profile?.id === "string" && profile.id.trim()
+      ? profile
+      : LOCAL_USER;
   } catch {
     window.localStorage.removeItem(USER_STORAGE_KEY);
-    return null;
+    return LOCAL_USER;
   }
 }
 
@@ -97,7 +105,7 @@ export default function App() {
 
   function handleSignOut() {
     window.localStorage.removeItem(USER_STORAGE_KEY);
-    setUser(null);
+    setUser(LOCAL_USER);
     setChats([]);
     setActiveChat(null);
     setError(null);
@@ -125,7 +133,7 @@ export default function App() {
     }
   }
 
-  async function sendMessage(content: string) {
+  async function sendMessage(content: string, image?: File) {
     if (isRateLimited) return;
 
     setIsSending(true);
@@ -138,6 +146,8 @@ export default function App() {
       if (!targetChat) return;
 
       if (!user) return;
+
+      const attachment = image ? await chatApi.uploadImage(targetChat.id, image, user.id) : undefined;
 
       optimisticMessage = {
         id: `pending-${crypto.randomUUID()}`,
@@ -192,7 +202,7 @@ export default function App() {
               : current,
           );
         },
-        onDone: ({ assistant_message, chat }) => {
+        onDone: async ({ assistant_message, chat }) => {
           setActiveChat((current) => ({
             ...(current ?? targetChat),
             ...chat,
@@ -204,8 +214,13 @@ export default function App() {
             chat,
             ...current.filter((currentChat) => currentChat.id !== chat.id),
           ]);
+          if (assistant_message.memory_trace?.memory_action?.status==='completed') {
+            const refreshed=await chatApi.get(chat.id,user.id);
+            setActiveChat(refreshed);
+            setChats(await chatApi.list(user.id));
+          }
         },
-      });
+      }, attachment?.id);
     } catch (requestError) {
       if (optimisticMessage && !receivedUserMessage) {
         setActiveChat((current) =>
@@ -232,6 +247,7 @@ export default function App() {
         );
       }
       setError(userFriendlyError(requestError, "The message could not be sent."));
+      throw requestError;
     } finally {
       setIsSending(false);
     }

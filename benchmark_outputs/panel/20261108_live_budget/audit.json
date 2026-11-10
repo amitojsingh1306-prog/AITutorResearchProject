@@ -1,0 +1,61 @@
+{
+  "passed": true,
+  "expected_predictions": 588,
+  "saved_predictions": 588,
+  "rescored_predictions": 588,
+  "findings": [],
+  "evidence_diagnostics": {
+    "buffer": {
+      "mean_evidence_id_precision": 0.0,
+      "mean_evidence_id_recall": 0.0,
+      "mean_prompt_byte_bound": 3509.3061224489797,
+      "mean_full_raw_source_bytes": 104680.75510204081
+    },
+    "summary": {
+      "mean_evidence_id_precision": 0.0,
+      "mean_evidence_id_recall": 0.0,
+      "mean_prompt_byte_bound": 4168.959183673469,
+      "mean_full_raw_source_bytes": 104680.75510204081
+    },
+    "vector": {
+      "mean_evidence_id_precision": 0.04530163713837183,
+      "mean_evidence_id_recall": 0.4294460641399417,
+      "mean_prompt_byte_bound": 4488.244897959184,
+      "mean_full_raw_source_bytes": 104680.75510204081
+    },
+    "graph": {
+      "mean_evidence_id_precision": 0.0018552875695732839,
+      "mean_evidence_id_recall": 0.006802721088435374,
+      "mean_prompt_byte_bound": 4093.061224489796,
+      "mean_full_raw_source_bytes": 104680.75510204081
+    }
+  },
+  "memory_path_participation": {
+    "buffer": {
+      "summary_in_prompt": 0,
+      "vector_evidence_added": 0,
+      "graph_evidence_added": 0,
+      "completed_requests": 147
+    },
+    "summary": {
+      "summary_in_prompt": 147,
+      "vector_evidence_added": 0,
+      "graph_evidence_added": 0,
+      "completed_requests": 147
+    },
+    "vector": {
+      "summary_in_prompt": 0,
+      "vector_evidence_added": 147,
+      "graph_evidence_added": 0,
+      "completed_requests": 147
+    },
+    "graph": {
+      "summary_in_prompt": 0,
+      "vector_evidence_added": 0,
+      "graph_evidence_added": 147,
+      "completed_requests": 147
+    }
+  },
+  "interpretation_warnings": [],
+  "note": "Evidence-ID overlap is not answer correctness; selected excerpts may omit source words. Byte bound and raw history exclude comparable tokenization, so no token-savings percentage is claimed."
+}

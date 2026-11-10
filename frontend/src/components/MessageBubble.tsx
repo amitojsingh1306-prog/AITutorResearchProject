@@ -1,9 +1,31 @@
 import type { Message } from "../types/chat";
+import { useEffect, useState } from 'react';
+import { chatApi } from '../api/chatApi';
 import { SparkIcon } from "./Icons";
 import { MarkdownContent } from "./MarkdownContent";
 
 interface MessageBubbleProps {
   message: Message;
+}
+
+function ImageAttachment({ message }: { message: Message }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const attachment = message.image_attachment!;
+  useEffect(() => {
+    let active = true;
+    let objectUrl: string | null = null;
+    void chatApi.imageBlob(message.chat_id, attachment.id, message.user_id).then((blob) => {
+      if (!active) return;
+      objectUrl = URL.createObjectURL(blob); setUrl(objectUrl);
+    }).catch(() => { if (active) setFailed(true); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [message.chat_id, message.user_id, attachment.id]);
+  return <div className="mb-3">
+    {url && <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={attachment.filename} className="max-h-64 max-w-full rounded-xl object-contain" /></a>}
+    <p className="text-xs opacity-80">{attachment.filename}{failed ? ' · Image unavailable or expired' : ''}</p>
+    <details className="mt-1 text-xs opacity-80"><summary className="cursor-pointer">Extracted text</summary><p className="mt-2 whitespace-pre-wrap">{attachment.ocr_text}{attachment.truncated ? '\n[Excerpt]' : ''}</p></details>
+  </div>;
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
@@ -23,6 +45,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             : "flex-1 py-2 text-slate-200"
         }`}
       >
+        {message.image_attachment && <ImageAttachment message={message} />}
         {isUser ? (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         ) : (

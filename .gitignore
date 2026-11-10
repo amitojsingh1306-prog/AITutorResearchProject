@@ -25,3 +25,25 @@ backend/.env
 # Frontend dependencies/build output
 frontend/node_modules/
 frontend/dist/
+
+# Local assets and consolidation audit
+ocr_models/**/*.traineddata
+ocr_outputs/
+project_consolidation/
+
+# Private OCR evidence
+/image_memory/
+
+# Filled private session records
+/chroma_db/session_memory/
+
+# Local graph server and private credentials
+/.local/
+
+# Local reports, research manuscripts and generated verification logs
+/research_paper/
+/output/
+/verification/results/
+*Research_Paper*.pdf
+*Research_Paper*.md
+/deliverables/slide_narration/

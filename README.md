@@ -1,322 +1,116 @@
-# ChatbotTutorAI
+# Hybrid Memory Benchmark for a Local Student Tutor
 
-ChatbotTutorAI is a FastAPI + React educational tutor chatbot with persistent
-chat history, real streaming responses, and a separate long-term student memory
-layer.
+A local tutor and a comparison of conversation buffer, extractive rolling summary,
+vector memory and graph memory. Qwen generates answers; memory supplies evidence.
+This project does not train Qwen on conversation records or on embeddings.
 
-The important design rule is:
+## Run
 
-```text
-chat messages != long-term memory
+The canonical checkout is `/Users/amitoj/Developer/AITutor`. The Desktop
+`ChatBotTutorAI/AITutor` entry points to that checkout, not an independent version.
+
+```sh
+cd /Users/amitoj/Developer/AITutor
+.venv/bin/python scripts/start_local.py
 ```
 
-Normal chat transcripts are stored as messages. Durable learner information is
-stored separately as structured memories in ChromaDB and used as hidden tutor
-context.
+Open `http://127.0.0.1:5173`. The launcher checks the project's MySQL and Neo4j,
+then starts FastAPI and React. LM Studio must serve the local Qwen and Nomic
+models. Run `scripts/panel_preflight.py` before the demonstration.
 
-## Current Capabilities
+## Current architecture
 
-- React + Vite frontend with a ChatGPT-style chat experience
-- FastAPI backend on `http://localhost:8000`
-- Streaming assistant responses over SSE
-- Groq as the primary LLM provider
-- Ollama Qwen fallback when Groq fails or is unavailable
-- ChromaDB persistence for chats, messages, learner profiles, and memories
-- Rolling recent-message context instead of appending the full transcript
-- Long-term memory with ADD / UPDATE / DELETE / NOOP decisions
-- Hidden memory grounding so raw retrieved memories are not shown to the user
-- Retrieval routing so Chroma does not replace current chat context
-- A-MEM-inspired evolved student memories for learning progress
+1. React sends a message or image to FastAPI.
+2. The backend validates ownership, saves the source in JSON and synchronizes it to local MySQL when enabled.
+3. The selected memory mode reads recent history and additional evidence.
+4. The backend assembles bounded text context and sends it to local Qwen through LM Studio.
+5. React displays the response; the backend saves it and updates derived memory.
+6. Explicit edits, deletions and forgetting reconcile source and derived stores.
 
-## Architecture
+JSON is the backend's working conversation memory and synchronizes to local MySQL.
+Qwen only receives assembled text through LM Studio. JSON files include filled common
+session blueprints. Chroma holds actual Nomic vectors and linked text. Neo4j
+holds source-linked learner facts and original-user-message nodes. Nomic and
+Qwen are different models; Qwen receives retrieved text, not Nomic vectors.
 
-```text
-User message
-    |
-    v
-FastAPI ChatService
-    |
-    v
-TutorOrchestrator
-    |
-    +--> Intent Agent
-    +--> Conversation State Agent
-    +--> Memory Agent
-    |       |
-    |       +--> MemoryManager
-    |       |       |
-    |       |       +--> Working memory: recent useful chat messages
-    |       |       +--> Long-term memory: ChromaDB memories collection
-    |       |       +--> Memory decision: ADD / UPDATE / DELETE / NOOP
-    |       |       +--> A-MEM evolution: update related memories, avoid duplicates
-    |       |
-    |       +--> VectorMemoryRetriever
-    |
-    +--> Knowledge Agent
-    +--> Teaching Planner
-    +--> Response Generation Agent
-    |
-    v
-Groq primary LLM
-    |
-    +--> Ollama Qwen fallback
-    |
-    v
-Frontend streaming response
+## Four memory configurations
+
+| Mode | Evidence added to recent context |
+|---|---|
+| `buffer` | None |
+| `summary` | Bounded older source excerpts from the current chat |
+| `vector` | Older user-scoped messages retrieved through Nomic and Chroma |
+| `graph` | Supported learner facts and graph-backed keyword source fallback |
+
+`hybrid` combines these paths. Summary is extractive, not LLM paraphrasing.
+Graph source fallback is lexical retrieval over source nodes, not vector search
+or a claim of unrestricted multi-hop reasoning. Memory selection is backend
+logic; the application does not require five agents to answer simultaneously.
+
+## Demonstration and evidence
+
+```sh
+.venv/bin/python scripts/panel_preflight.py
+.venv/bin/python scripts/panel_demo.py
+.venv/bin/python scripts/inspect_memory.py --user YOUR_FRONTEND_USER_ID --follow
 ```
 
-## Project Structure
+The demo uses isolated example records and real local services. It leaves
+ordinary conversations untouched and removes its test records afterward.
+The inspector reads only the specified learner's chat. Similarity values are
+retrieval scores, not probabilities that an answer is correct.
 
-```text
-ChatBotTutorAI/
-├── backend/
-│   ├── api/                  FastAPI routes
-│   ├── agents/               Intent, memory, planning, response agents
-│   ├── database/             ChromaDB repository
-│   ├── llm/                  Groq, Ollama, and fallback clients
-│   ├── memory/               Working memory, retrieval, memory manager
-│   ├── models/               Pydantic domain/API models
-│   ├── orchestration/        Tutor pipeline
-│   ├── services/             Chat service
-│   └── tests/                Backend tests
-├── frontend/                 React, Vite, TypeScript, Tailwind CSS
-├── chroma_db/                Local ChromaDB data, ignored by Git
-├── uploads/                  Future learning-resource uploads
-└── docs/                     Extra architecture notes
+```sh
+.venv/bin/python scripts/run_panel_evaluation.py --conversation-limit 10 --repeats 3
 ```
 
-## LLM Providers
+This compares four modes using the first available question per category in
+each official LoCoMo conversation: 49 unique questions, three trials per mode,
+588 planned predictions. It is a selected-subset adaptation, not the full 1,986
+questions or a reproduction of published paper scores. The current production
+context builder is invoked directly; full API storage/image/deletion behaviour
+is tested separately. References and generated answers never enter test memory.
 
-The backend keeps one LLM interface and chooses providers internally.
+Reports, raw predictions, source hashes, settings and cleanup receipts are saved
+under `benchmark_outputs/panel/`. Do not compare a partial run's averages between
+modes with unequal completed questions. Do not present the earlier historical
+benchmark as a measurement of newer code.
 
-Default flow:
+For the demonstration order, code locations and claim boundaries, read
+[Panel guide](docs/panel-guide.md). Fresh results and recommendations are
+available in `benchmark_outputs/panel/20261108_live_budget/report.md` and its accompanying audit.
 
-```text
-Try Groq
-    |
-    +-- success --> return Groq response
-    |
-    +-- failure/rate limit/timeout --> fallback to Ollama Qwen
+## Memory control and limits
+
+Examples: `Forget my name.`, `Forget about recursion.`, `Forget this chat.` and
+`Update my name to AJ.`. Ambiguous commands ask for clarification. FastAPI also
+provides PATCH/DELETE message routes and DELETE chat. See
+[Update and forgetting](docs/update-delete-forgetting.md).
+
+Tracked sessions expire after one hour of inactivity. Cross-chat recall only
+applies while records remain retained. Original external files, backups, logs
+and exports are outside active-store deletion. Identity headers are a local
+prototype mechanism, not production authentication. Loopback model URLs are
+enforced by default; this is not a complete privacy/security certification.
+
+Images use local Tesseract OCR followed by text-based Qwen generation; general
+visual reasoning is not implemented. The small model can still make factual or
+reasoning errors even with relevant memory.
+
+## Dependencies and checks
+
+Use the existing `.venv`. `backend/requirements.txt` contains runtime packages;
+`backend/requirements-evaluation.txt` adds scoring/test packages. OCR additionally
+requires local Tesseract and the English weights in `ocr_models/`. Model weights
+must be available in LM Studio. Private service credentials stay under ignored
+`.local/` files and must not be displayed or committed.
+
+Run the automated checks with:
+
+```sh
+.venv/bin/python -B -m pytest backend/tests scripts/test_locomo_eval_protocol.py scripts/test_official_locomo.py -q
 ```
 
-Relevant environment variables:
-
-```dotenv
-GROQ_API_KEY=your_groq_key
-GROQ_BASE_URL=https://api.groq.com/openai/v1
-GROQ_MODEL=llama-3.3-70b-versatile
-GROQ_NUM_PREDICT=700
-
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=qwen2.5:1.5b
-OLLAMA_KEEP_ALIVE=30m
-OLLAMA_NUM_PREDICT=700
-```
-
-Do not commit `.env`.
-
-## Memory System
-
-The memory layer is separate from chat messages.
-
-### Working Memory
-
-Working memory is the short rolling context sent to the model for conversation
-continuity. It keeps recent useful messages and filters out low-signal turns
-like greetings.
-
-### Long-Term Memory
-
-Long-term memory is stored in the ChromaDB `memories` collection. The
-MemoryManager decides whether each user turn should become memory:
-
-- `ADD`: new durable learner information
-- `UPDATE`: changed or improved learner state
-- `DELETE`: user asks to forget something
-- `NOOP`: temporary chat, greeting, or non-durable information
-
-Memory categories:
-
-- Goal
-- Knowledge State
-- Learning Difficulty
-- Preference
-- Achievement
-- Fact
-
-### A-MEM-Inspired Evolved Student Memories
-
-When a durable memory is saved, the backend now stores a structured student
-memory object inside the existing `MemoryRecord.memory` field.
-
-Example:
-
-```json
-{
-  "topic": "Recursion",
-  "concepts": ["Recursion", "Base Cases"],
-  "difficulty": "Learning difficulty: I am confused about recursion base cases",
-  "progress": "Knowledge state: I understood recursion examples but need practice",
-  "important_facts": [],
-  "tags": ["Knowledge State", "Recursion", "Base Cases"],
-  "timestamp": "2026-08-07T..."
-}
-```
-
-Before creating a new memory, the MemoryManager searches related memories. If a
-matching topic/concept exists, it evolves that existing memory instead of adding
-a duplicate.
-
-Example:
-
-```text
-Turn 1:
-I am confused about recursion base cases
-
-Memory:
-topic=Recursion
-difficulty=confused about recursion base cases
-
-Turn 2:
-I understood recursion examples but need practice
-
-Updated same memory:
-topic=Recursion
-difficulty=confused about recursion base cases
-progress=understood recursion examples but need practice
-```
-
-## Retrieval Rules
-
-Chroma is only a retrieval memory store. It does not decide what the user
-discussed and it does not replace the current chat context.
-
-Retrieval modes:
-
-- `CURRENT_CONVERSATION`: use current chat history only, Chroma disabled
-- `USER_PROFILE`: retrieve profile-style memories like facts, goals, preferences
-- `KNOWLEDGE`: retrieve knowledge-state memories for teaching personalization
-- `GENERAL`: retrieve filtered relevant memories
-
-Retrieved memories are hidden tutor notes by default. The assistant should use
-them for personalization, but not quote or list them unless the user explicitly
-asks about memory/history.
-
-## Memory Debug Logs
-
-After every chat turn, the backend prints the current user's evolved memories:
-
-```text
-[EVOLVED MEMORY DEBUG] user_id=... active_memory_count=...
-[EVOLVED MEMORY DEBUG] 1 id=... type=... topic=Recursion concepts=[...] difficulty=... progress=... facts=[...] tags=[...]
-```
-
-Use this to verify:
-
-- recursion confusion creates a memory
-- later improvement updates the same memory
-- duplicate recursion memories are not created
-
-Other useful debug blocks:
-
-```text
-[MEMORY ROUTER]
-[MEMORY DEBUG]
-[RETRIEVAL DEBUG]
-[GENERATION DEBUG]
-```
-
-## Run the Backend
-
-From the project root:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r backend/requirements-dev.txt
-python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-On this Mac workspace, the existing local environment is:
-
-```bash
-.venv-mac/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-Health check:
-
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-Expected:
-
-```json
-{"status":"healthy"}
-```
-
-## Run the Frontend
-
-Open a second terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend URL:
-
-```text
-http://localhost:5173
-```
-
-If the backend is hosted somewhere else, create `frontend/.env`:
-
-```dotenv
-VITE_API_URL=http://localhost:8000
-```
-
-## API
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `POST` | `/chat/create` | Create an empty chat |
-| `GET` | `/chat/list` | List chats by recent activity |
-| `GET` | `/chat/{id}` | Restore one chat and its messages |
-| `POST` | `/chat/{id}/message` | Send a non-streaming chat message |
-| `POST` | `/chat/{id}/message/stream` | Send a streaming chat message |
-| `GET` | `/health` | Check backend health |
-
-## Test
-
-Run backend tests:
-
-```bash
-.venv-mac/bin/python -m pytest backend/tests/test_chat_api.py
-```
-
-Current verified result:
-
-```text
-44 passed
-```
-
-## Manual Memory Test
-
-In the chat UI, send:
-
-```text
-I am confused about recursion base cases
-```
-
-Then send:
-
-```text
-I understood recursion examples but need practice
-```
-
-Check the backend terminal. You should see one evolved `Recursion` memory, not
-two duplicate recursion memories.
-
+The checks cover memory, routes, OCR, scoring and explicit legacy compatibility.
+They do not imply that the active tutor uses the old multi-agent pipeline.
+Real local-service integration and model answer quality are separate checks.

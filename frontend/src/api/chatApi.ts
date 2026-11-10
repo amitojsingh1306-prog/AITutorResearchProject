@@ -43,7 +43,7 @@ interface StreamHandlers {
   onUserMessage: (message: Message) => void;
   onAssistantMessageStart: (message: Message) => void;
   onChunk: (content: string) => void;
-  onDone: (payload: StreamDonePayload) => void;
+  onDone: (payload: StreamDonePayload) => void | Promise<void>;
 }
 
 function findSseSeparator(buffer: string): { index: number; length: number } | null {
@@ -123,7 +123,7 @@ async function streamRequest(
       } else if (parsed?.event === "chunk") {
         handlers.onChunk((parsed.data as { content: string }).content);
       } else if (parsed?.event === "done") {
-        handlers.onDone(parsed.data as StreamDonePayload);
+        await handlers.onDone(parsed.data as StreamDonePayload);
         await reader.cancel().catch(() => undefined);
         return;
       } else if (parsed?.event === "error") {
@@ -138,13 +138,26 @@ async function streamRequest(
 
   const parsed = buffer.trim() ? parseSseEvent(buffer) : null;
   if (parsed?.event === "done") {
-    handlers.onDone(parsed.data as StreamDonePayload);
+    await handlers.onDone(parsed.data as StreamDonePayload);
   } else if (parsed?.event === "error") {
     throw new Error((parsed.data as { detail?: string }).detail ?? "Stream failed.");
   }
 }
 
 export const chatApi = {
+  uploadImage: async (chatId: string, file: File, userId: string): Promise<{ id: string; filename: string }> => {
+    const response = await fetch(`${API_URL}/chat/${chatId}/images?filename=${encodeURIComponent(file.name)}`, {
+      method: 'POST', headers: { 'Content-Type': file.type || 'application/octet-stream', 'X-User-Id': userId }, body: file,
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.detail ?? 'Image could not be read.');
+    return body;
+  },
+  imageBlob: async (chatId: string, imageId: string, userId: string): Promise<Blob> => {
+    const response = await fetch(`${API_URL}/chat/${chatId}/images/${imageId}`, { headers: { 'X-User-Id': userId }, cache: 'no-store' });
+    if (!response.ok) throw new Error('Image is unavailable or has expired.');
+    return response.blob();
+  },
   list: (userId: string) => request<ChatSummary[]>("/chat/list", userId),
 
   create: (userId: string) =>
@@ -167,5 +180,6 @@ export const chatApi = {
     content: string,
     userId: string,
     handlers: StreamHandlers,
-  ) => streamRequest(`/chat/${chatId}/message/stream`, userId, { content }, handlers),
+    imageId?: string,
+  ) => streamRequest(`/chat/${chatId}/message/stream`, userId, { content, image_id: imageId }, handlers),
 };

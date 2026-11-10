@@ -1,0 +1,24 @@
+{
+  "schema_version": "2.0",
+  "user_id": "",
+  "chat_id": null,
+  "session_id": "",
+  "created_at": null,
+  "last_activity_at": null,
+  "expires_at": null,
+  "retention": {"idle_seconds": 3600, "scope": "whole_session"},
+  "learner": {
+    "name": "",
+    "university": "",
+    "learning_goals": [],
+    "current_topic": "",
+    "programming_language": "",
+    "explanation_preferences": {"length": "", "format": "", "examples": ""},
+    "misconceptions": [],
+    "completed_topics": []
+  },
+  "rolling_summary": "",
+  "rolling_summary_meta": {},
+  "messages": [],
+  "images": []
+}

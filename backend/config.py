@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -54,6 +55,19 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("OLLAMA_NUM_PREDICT", "CHATBOT_OLLAMA_NUM_PREDICT"),
     )
     working_memory_message_limit: int = 10
+    lmstudio_base_url: str = "http://127.0.0.1:1234/v1"
+    lmstudio_model: str = "qwen2.5-1.5b-instruct"
+    embedding_model: str = "text-embedding-nomic-embed-text-v1.5"
+    prompt_token_budget: int = Field(default=2800, ge=512)
+    memory_min_similarity: float = Field(default=0.60, ge=-1, le=1)
+    memory_configuration: Literal['buffer', 'summary', 'vector', 'graph', 'hybrid'] = 'hybrid'
+    local_only: bool = True
+    graph_enabled: bool = False
+    mysql_enabled: bool = False
+    mysql_credentials_file: Path = PROJECT_ROOT / '.local' / 'mysql_credentials.json'
+    graph_uri: str = 'bolt://127.0.0.1:7687'
+    graph_database: str = 'neo4j'
+    graph_credentials_file: Path = PROJECT_ROOT / '.local' / 'graph_credentials.json'
     smtp_host: str | None = Field(
         default=None,
         validation_alias=AliasChoices("SMTP_HOST", "CHATBOT_SMTP_HOST"),

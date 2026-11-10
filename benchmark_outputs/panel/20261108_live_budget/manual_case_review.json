@@ -1,0 +1,38 @@
+{
+  "scope": "Qualitative examples inspected during the 6,144-unit run; not an accuracy estimate",
+  "cases": [
+    {
+      "sample_id": "conv-42",
+      "qa_index": 1,
+      "mode": "vector",
+      "repeat": 0,
+      "observation": "The 0.5 multi-hop overlap score is not a fully correct answer. Qwen lists separate hobbies, omits the shared dessert-making activity, and does not establish both people sharing movie-watching.",
+      "evidence_observation": "The vector block includes D1:10 but the inspected candidate list omits the other annotated supporting turns. One high cosine result is about gaming, not the shared interests asked for.",
+      "implication": "Retrieval finds related text but can miss the combination needed for a multi-hop answer. Partial lexical credit should not be reported as full correctness."
+    },
+    {
+      "sample_id": "conv-41",
+      "qa_index": 0,
+      "mode": "vector",
+      "repeat": 0,
+      "observation": "Qwen says Maria had dinner with her mom; the reference is her mother. These are semantically equivalent here, but wording overlap is only 0.1667.",
+      "implication": "Synonyms and extra explanatory words can lower lexical F1 even when the requested fact is present. Do not equate F1 with a truth probability."
+    },
+    {
+      "sample_id": "conv-30",
+      "qa_index": 2,
+      "mode": "graph",
+      "repeat": 0,
+      "observation": "Qwen includes the reference activity, dancing, in a longer sentence; the reported overlap score is 0.3636.",
+      "implication": "The longer answer has the target fact but incurs a precision penalty. This single example does not establish graph-memory superiority."
+    },
+    {
+      "sample_id": "conv-26",
+      "qa_index": 0,
+      "mode": "vector",
+      "repeat": 0,
+      "observation": "Prediction 2023-05-07 denotes the same date as the reference 7 May 2023, but the upstream lexical scorer gives 0.0.",
+      "implication": "This is a format mismatch, not a wrong-date example. Preserve the official score and report the semantic equivalence separately as a qualitative observation."
+    }
+  ]
+}

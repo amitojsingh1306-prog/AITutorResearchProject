@@ -1,0 +1,11 @@
+{
+  "engine": "Tesseract",
+  "family": "tessdata_best",
+  "language": "eng",
+  "file": "eng.traineddata",
+  "license": "Apache-2.0",
+  "upstream_commit": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec",
+  "source": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/e12c65a915945e4c28e237a9b52bc4a8f39a0cec/eng.traineddata",
+  "sha256": "8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba",
+  "ocr_engine_mode": 1
+}

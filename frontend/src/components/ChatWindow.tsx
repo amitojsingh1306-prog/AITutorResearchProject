@@ -17,7 +17,7 @@ interface ChatWindowProps {
   user: UserProfile;
   onSignOut: () => void;
   onOpenSidebar: () => void;
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string, image?: File) => Promise<void>;
 }
 
 export function ChatWindow({
@@ -31,15 +31,40 @@ export function ChatWindow({
   onOpenSidebar,
   onSend,
 }: ChatWindowProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const followLatest = useRef(true);
+  const previousTurn = useRef({ chatId: chat?.id, sending: isSending });
   const [isMemoryOpen, setIsMemoryOpen] = useState(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chat?.messages, isSending]);
+    const previous = previousTurn.current;
+    if (previous.chatId !== chat?.id || (isSending && !previous.sending)) {
+      followLatest.current = true;
+    }
+    previousTurn.current = { chatId: chat?.id, sending: isSending };
+    // Move only the message pane. scrollIntoView can move the outer page too,
+    // and repeated smooth animations fight streamed code-block growth.
+    const frame = requestAnimationFrame(() => {
+      const pane = scrollRef.current;
+      if (pane && followLatest.current) pane.scrollTop = pane.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [chat?.id, chat?.messages, isSending]);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(() => {
+      const pane = scrollRef.current;
+      if (pane && followLatest.current) pane.scrollTop = pane.scrollHeight;
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col bg-ink-900">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-ink-900">
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-4 sm:px-6">
         <button
           type="button"
@@ -79,8 +104,13 @@ export function ChatWindow({
         </div>
       </header>
 
-      <section className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 py-8 sm:px-8 lg:px-10">
+      <section ref={scrollRef} aria-label="Conversation messages"
+        onScroll={() => {
+          const pane = scrollRef.current;
+          if (pane) followLatest.current = pane.scrollHeight - pane.scrollTop - pane.clientHeight < 100;
+        }}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain [overflow-anchor:none]">
+        <div ref={contentRef} className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-4 py-8 sm:px-8 lg:px-10">
           {isLoadingChat ? (
             <div className="grid flex-1 place-items-center">
               <div className="flex items-center gap-3 text-sm text-slate-500">
@@ -113,11 +143,11 @@ export function ChatWindow({
               {isSending && <LoadingBubble />}
             </div>
           )}
-          <div ref={bottomRef} />
         </div>
       </section>
 
       <MessageComposer
+        key={chat?.id ?? 'new-chat'}
         disabled={isSending || isRateLimited}
         errorMessage={errorMessage}
         onSend={onSend}

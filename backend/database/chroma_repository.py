@@ -14,6 +14,7 @@ from chromadb.api.models.Collection import Collection
 from backend.models.chat import ChatSummary, Message
 from backend.models.learner import LearnerProfile, MemoryRecord
 from backend.utils.time import parse_timestamp
+from backend.memory.session_memory import SessionMemory, session_locked
 
 
 logger = logging.getLogger(__name__)
@@ -56,19 +57,26 @@ class ChromaChatRepository:
             embedding_function=None,
             metadata={"description": "ChatbotTutorAI meaningful learner memories"},
         )
+        self.session_memory = SessionMemory(self, persistence_path / 'session_memory')
+        from backend.memory.mutations import MemoryMutations
+        self.mutations=MemoryMutations(self)
         logger.warning(
             "[MEMORY DEBUG] Chroma collection initialized collection=memories count=%s path=%s",
             self._memories.count(),
             persistence_path,
         )
 
+    @session_locked
     def save_chat(self, chat: ChatSummary) -> ChatSummary:
         chats = self._read_json_file(self._chat_file)
         chats[chat.id] = chat.model_dump_json()
         self._write_json_file(self._chat_file, chats)
+        self.session_memory.track_chat(chat)
         return chat
 
+    @session_locked
     def list_chats(self, user_id: str) -> list[ChatSummary]:
+        self.session_memory.expire()
         chats = [
             ChatSummary.model_validate_json(document)
             for document in self._read_json_file(self._chat_file).values()
@@ -76,7 +84,9 @@ class ChromaChatRepository:
         chats = [chat for chat in chats if chat.user_id == user_id]
         return sorted(chats, key=lambda item: item.updated_at, reverse=True)
 
+    @session_locked
     def get_chat(self, chat_id: str, user_id: str) -> ChatSummary:
+        self.session_memory.expire()
         document = self._read_json_file(self._chat_file).get(chat_id)
         if not document:
             raise ChatNotFoundError(chat_id)
@@ -85,13 +95,32 @@ class ChromaChatRepository:
             raise ChatNotFoundError(chat_id)
         return chat
 
+    @session_locked
     def save_message(self, message: Message) -> Message:
         messages = self._read_json_file(self._message_file)
         messages[message.id] = message.model_dump_json()
         self._write_json_file(self._message_file, messages)
+        self.session_memory.track_message(message)
+        summary = getattr(self, 'rolling_summary', None)
+        if summary is not None:
+            summary.refresh(message)
+        semantic_memory = getattr(self, "semantic_memory", None)
+        if semantic_memory is not None:
+            try:
+                semantic_memory.sync(message.user_id)
+            except Exception:
+                logger.exception("Indexing failed; JSON is saved and semantic sync will retry")
+        graph_memory = getattr(self, 'graph_memory', None)
+        if graph_memory is not None:
+            try:
+                graph_memory.sync(message.user_id)
+            except Exception:
+                logger.exception('Graph sync failed; saved JSON will be reconciled before retrieval')
         return message
 
+    @session_locked
     def list_messages(self, chat_id: str, user_id: str) -> list[Message]:
+        self.session_memory.expire()
         messages = [
             Message.model_validate_json(document)
             for document in self._read_json_file(self._message_file).values()
@@ -103,13 +132,53 @@ class ChromaChatRepository:
         ]
         return sorted(messages, key=lambda item: item.timestamp)
 
+    @session_locked
     def list_user_messages(self, user_id: str) -> list[Message]:
+        self.session_memory.expire()
         messages = [
             Message.model_validate_json(document)
             for document in self._read_json_file(self._message_file).values()
         ]
         messages = [message for message in messages if message.user_id == user_id]
         return sorted(messages, key=lambda item: item.timestamp)
+
+    def forget_session(self, record: dict) -> None:
+        """Delete this conversation and its source-linked vector records only."""
+        user_id, chat_id = record['user_id'], record['chat_id']
+        if chat_id is None:
+            return  # Standalone OCR records have no chat messages or vectors.
+        graph = getattr(self, 'graph_memory', None)
+        if graph is not None:
+            graph.forget_chat(user_id, chat_id)
+        messages = self._read_json_file(self._message_file)
+        ids = [key for key, value in messages.items()
+               if (json.loads(value).get('user_id'), json.loads(value).get('chat_id')) == (user_id, chat_id)]
+        ids = list(set(ids) | {item['id'] for item in record['messages']})
+        # Restrict deletion to known chat-index collections, not arbitrary stores.
+        for name in self._client.list_collections():
+            name = str(name)
+            if name in {'messages', 'chats', 'json_message_embeddings'} or name.startswith('semantic_messages_'):
+                collection = self._client.get_collection(name=name, embedding_function=None)
+                if ids:
+                    collection.delete(ids=ids)
+                collection.delete(where={'$and': [{'user_id': user_id}, {'chat_id': chat_id}]})
+                if name == 'chats':
+                    collection.delete(ids=[chat_id])
+        for memory in self.list_memories(user_id):
+            if memory.source_message_id in ids:
+                self._memories.delete(ids=[memory.id])
+        for key in ids:
+            messages.pop(key, None)
+        # Strip diagnostic copies of expired source excerpts from other turns.
+        for key, value in messages.items():
+            item = json.loads(value)
+            if item.get('user_id') == user_id and item.get('memory_trace'):
+                item['memory_trace'] = None
+                messages[key] = json.dumps(item)
+        self._write_json_file(self._message_file, messages)
+        chats = self._read_json_file(self._chat_file)
+        chats.pop(chat_id, None)
+        self._write_json_file(self._chat_file, chats)
 
     def get_learner_profile(self, user_id: str) -> LearnerProfile:
         profiles = self._read_profile_file()
@@ -121,7 +190,7 @@ class ChromaChatRepository:
     def save_learner_profile(self, profile: LearnerProfile) -> LearnerProfile:
         profiles = self._read_profile_file()
         profiles[profile.user_id] = profile.model_dump_json()
-        self._profile_file.write_text(json.dumps(profiles, indent=2), encoding="utf-8")
+        self._write_json_file(self._profile_file, profiles)
         return profile
 
     def _read_profile_file(self) -> dict[str, str]:

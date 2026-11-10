@@ -1,0 +1,186 @@
+{
+  "completed": true,
+  "scope": "Current context builder; selected official LoCoMo questions; declared modes; repeated local generation",
+  "results": {
+    "buffer": {
+      "attempted": 147,
+      "completed": 147,
+      "errors": 0,
+      "mean_answer_f1_categories_1_4": 0.005269747695766633,
+      "abstention_phrase_score_category_5": 0.9,
+      "mean_generation_request_ms": 1411.7189167142778,
+      "mean_context_build_ms": 70.17229255100011,
+      "mean_actual_input_tokens": 867.6326530612245,
+      "categories": {
+        "1": {
+          "name": "multi_hop",
+          "count": 30,
+          "score": 0.0015151515151515152
+        },
+        "2": {
+          "name": "temporal",
+          "count": 30,
+          "score": 0.0
+        },
+        "3": {
+          "name": "open_domain",
+          "count": 27,
+          "score": 0.012437474714929325
+        },
+        "4": {
+          "name": "single_hop",
+          "count": 30,
+          "score": 0.00784313725490196
+        },
+        "5": {
+          "name": "adversarial_abstention",
+          "count": 30,
+          "score": 0.9
+        }
+      }
+    },
+    "summary": {
+      "attempted": 147,
+      "completed": 147,
+      "errors": 0,
+      "mean_answer_f1_categories_1_4": 0.009838821923303454,
+      "abstention_phrase_score_category_5": 0.8333333333333334,
+      "mean_generation_request_ms": 2370.2483452108786,
+      "mean_context_build_ms": 97.35008191159822,
+      "mean_actual_input_tokens": 1069.5102040816328,
+      "categories": {
+        "1": {
+          "name": "multi_hop",
+          "count": 30,
+          "score": 0.004223521767381416
+        },
+        "2": {
+          "name": "temporal",
+          "count": 30,
+          "score": 0.0
+        },
+        "3": {
+          "name": "open_domain",
+          "count": 27,
+          "score": 0.025936031183717952
+        },
+        "4": {
+          "name": "single_hop",
+          "count": 30,
+          "score": 0.010805455668155895
+        },
+        "5": {
+          "name": "adversarial_abstention",
+          "count": 30,
+          "score": 0.8333333333333334
+        }
+      }
+    },
+    "vector": {
+      "attempted": 147,
+      "completed": 147,
+      "errors": 0,
+      "mean_answer_f1_categories_1_4": 0.16369006749775475,
+      "abstention_phrase_score_category_5": 0.6,
+      "mean_generation_request_ms": 4671.817662408084,
+      "mean_context_build_ms": 740.0657386735016,
+      "mean_actual_input_tokens": 1231.5102040816328,
+      "categories": {
+        "1": {
+          "name": "multi_hop",
+          "count": 30,
+          "score": 0.146926280347333
+        },
+        "2": {
+          "name": "temporal",
+          "count": 30,
+          "score": 0.05080105212816834
+        },
+        "3": {
+          "name": "open_domain",
+          "count": 27,
+          "score": 0.16115148191677964
+        },
+        "4": {
+          "name": "single_hop",
+          "count": 30,
+          "score": 0.2956275970406405
+        },
+        "5": {
+          "name": "adversarial_abstention",
+          "count": 30,
+          "score": 0.6
+        }
+      }
+    },
+    "graph": {
+      "attempted": 147,
+      "completed": 147,
+      "errors": 0,
+      "mean_answer_f1_categories_1_4": 0.02465409213274904,
+      "abstention_phrase_score_category_5": 0.6,
+      "mean_generation_request_ms": 4323.035849523771,
+      "mean_context_build_ms": 426.9801352585481,
+      "mean_actual_input_tokens": 1009.3877551020408,
+      "categories": {
+        "1": {
+          "name": "multi_hop",
+          "count": 30,
+          "score": 0.027397186147186146
+        },
+        "2": {
+          "name": "temporal",
+          "count": 30,
+          "score": 0.004851492593428077
+        },
+        "3": {
+          "name": "open_domain",
+          "count": 27,
+          "score": 0.018449795707539386
+        },
+        "4": {
+          "name": "single_hop",
+          "count": 30,
+          "score": 0.04729746444032158
+        },
+        "5": {
+          "name": "adversarial_abstention",
+          "count": 30,
+          "score": 0.6
+        }
+      }
+    }
+  },
+  "paired_comparisons": {
+    "summary": {
+      "paired_f1_difference": 0.004569074227536821,
+      "conversation_cluster_bootstrap_95_interval": [
+        -0.00030145843368916536,
+        0.009713869526023745
+      ],
+      "conversations": 10,
+      "paired_predictions": 117,
+      "note": "Exploratory interval on this selected subset; not population-wide significance."
+    },
+    "vector": {
+      "paired_f1_difference": 0.15842031980198812,
+      "conversation_cluster_bootstrap_95_interval": [
+        0.08253752302917311,
+        0.2518619177519456
+      ],
+      "conversations": 10,
+      "paired_predictions": 117,
+      "note": "Exploratory interval on this selected subset; not population-wide significance."
+    },
+    "graph": {
+      "paired_f1_difference": 0.019384344436982406,
+      "conversation_cluster_bootstrap_95_interval": [
+        0.008673978080062431,
+        0.032875670335842135
+      ],
+      "conversations": 10,
+      "paired_predictions": 117,
+      "note": "Exploratory interval on this selected subset; not population-wide significance."
+    }
+  }
+}

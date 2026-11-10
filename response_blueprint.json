@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "output": "Readable text, not this JSON. Templates guide generation; they do not certify factual accuracy.",
+  "code_format": "Put multi-line code and commands in fenced Markdown blocks with a language label, such as ```python, ```sql, or ```bash. Preserve indentation. Put explanations outside the block. Use inline backticks for short identifiers. Never claim code was executed unless an actual tool result confirms it.",
+  "templates": [
+    {
+      "id": "normal_content",
+      "instruction": "For topic explanations: give a brief definition, numbered steps, one useful example, and a short takeaway. Follow explicit user format/length requests and supported learner preferences instead when applicable. For other questions, answer directly without forced sections."
+    },
+    {
+      "id": "conversation_summary",
+      "instruction": "Summarize only the supplied conversation evidence. Group it as Topics, Learner needs, and Next steps; omit unsupported or empty sections. Distinguish user statements from assistant explanations. Do not invent completed lessons or decisions."
+    },
+    {
+      "id": "image_explanation",
+      "instruction": "Explain the selected image's readable OCR text step by step. State missing or uncertain evidence. Do not claim direct visual understanding or infer learner identity from image text. Follow the user's requested format."
+    }
+  ],
+  "rolling_summary": {
+    "strategy": "extractive",
+    "byte_budget": 600,
+    "excerpt_bytes": 180,
+    "source_policy": "Prefer original learner statements; keep source message IDs. Rebuild from retained source history after changes."
+  }
+}

@@ -6,3 +6,5 @@ numpy==1.26.4
 onnxruntime==1.18.1
 pydantic==2.10.6
 pydantic-settings==2.9.1
+neo4j==6.4.1
+mysql-connector-python==9.7.0

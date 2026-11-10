@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="#315b87"/></marker></defs>
+<rect width="1800" height="1000" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#142b45">
+<text x="55" y="70" font-size="38" font-weight="bold">Hybrid Memory Benchmark for a Local Student Tutor</text>
+<text x="55" y="119" font-size="24">Online tutor  ·  Local inference  ·  Source-linked memory  ·  Explicit forgetting</text>
+<g fill="#e8f0fa" stroke="#315b87" stroke-width="2">
+<rect x="55" y="180" width="215" height="150" rx="14"/><rect x="300" y="180" width="215" height="150" rx="14"/>
+<rect x="545" y="180" width="215" height="150" rx="14"/><rect x="790" y="180" width="215" height="150" rx="14"/>
+<rect x="1035" y="180" width="215" height="150" rx="14"/><rect x="1280" y="180" width="215" height="150" rx="14"/>
+<rect x="1525" y="180" width="215" height="150" rx="14"/>
+<rect x="545" y="410" width="460" height="190" rx="14"/><rect x="1035" y="410" width="460" height="190" rx="14"/>
+<rect x="55" y="765" width="300" height="140" rx="14"/><rect x="400" y="765" width="300" height="140" rx="14"/>
+<rect x="745" y="765" width="300" height="140" rx="14"/><rect x="1090" y="765" width="300" height="140" rx="14"/>
+<rect x="1435" y="765" width="300" height="140" rx="14"/>
+</g>
+<g stroke="#315b87" stroke-width="2" marker-end="url(#arrow)">
+<path d="M270 255H295"/><path d="M515 255H540"/><path d="M760 255H785"/><path d="M1005 255H1030"/><path d="M1250 255H1275"/><path d="M1495 255H1520"/>
+<path d="M897 330V405"/><path d="M1142 330V405"/>
+<path d="M355 835H395"/><path d="M700 835H740"/><path d="M1045 835H1085"/><path d="M1390 835H1430"/>
+</g>
+<g text-anchor="middle" font-size="25">
+<text x="162" y="221"><tspan font-weight="bold">1  React</tspan><tspan x="162" dy="38">Learner message</tspan><tspan x="162" dy="32">or image upload</tspan></text>
+<text x="407" y="221"><tspan font-weight="bold">2  FastAPI</tspan><tspan x="407" dy="38">User and chat</tspan><tspan x="407" dy="32">request handling</tspan></text>
+<text x="652" y="221"><tspan font-weight="bold">3  Storage</tspan><tspan x="652" dy="38">MySQL records</tspan><tspan x="652" dy="32">Local JSON views</tspan></text>
+<text x="897" y="221"><tspan font-weight="bold">4  Memory</tspan><tspan x="897" dy="38">Select evidence</tspan><tspan x="897" dy="32">for this learner</tspan></text>
+<text x="1142" y="221"><tspan font-weight="bold">5  Context</tspan><tspan x="1142" dy="38">Current question</tspan><tspan x="1142" dy="32">and bounded text</tspan></text>
+<text x="1387" y="221"><tspan font-weight="bold">6  LM Studio</tspan><tspan x="1387" dy="38">Local Qwen 1.5B</tspan><tspan x="1387" dy="32">generates answer</tspan></text>
+<text x="1632" y="221"><tspan font-weight="bold">7  Response</tspan><tspan x="1632" dy="38">Display in React</tspan><tspan x="1632" dy="32">Save for recall</tspan></text>
+<text x="775" y="452"><tspan font-weight="bold">Four configurations</tspan><tspan x="775" dy="37">Buffer · Extractive summary</tspan><tspan x="775" dy="33">Nomic + Chroma vector retrieval</tspan><tspan x="775" dy="33">Neo4j facts and source evidence</tspan></text>
+<text x="1265" y="452"><tspan font-weight="bold">Selection controls</tspan><tspan x="1265" dy="37">Ownership · Source dates · Budget</tspan><tspan x="1265" dy="33">Similarity cutoff · Deduplication</tspan><tspan x="1265" dy="33">Unknown personal facts → abstain</tspan></text>
+<text x="205" y="810"><tspan font-weight="bold">8  LoCoMo</tspan><tspan x="205" dy="38">Held-out questions</tspan><tspan x="205" dy="32">Source history only</tspan></text>
+<text x="550" y="810"><tspan font-weight="bold">9  Configurations</tspan><tspan x="550" dy="38">Same inputs and budget</tspan><tspan x="550" dy="32">Isolated local stores</tspan></text>
+<text x="895" y="810"><tspan font-weight="bold">10  Generation</tspan><tspan x="895" dy="38">Same context builder</tspan><tspan x="895" dy="32">Repeated Qwen trials</tspan></text>
+<text x="1240" y="810"><tspan font-weight="bold">11  Scoring</tspan><tspan x="1240" dy="38">Held-out references</tspan><tspan x="1240" dy="32">F1 and abstention</tspan></text>
+<text x="1585" y="810"><tspan font-weight="bold">12  Evidence</tspan><tspan x="1585" dy="38">Answers · Traces</tspan><tspan x="1585" dy="32">Timing and comparison</tspan></text>
+</g>
+<text x="55" y="670" font-size="23">Maintenance: edits and forgetting reconcile MySQL, JSON, Chroma, Neo4j, summaries and managed images.</text>
+<text x="55" y="720" font-size="25" font-weight="bold">Offline evaluation uses the same context code; answer keys and predictions never enter test memory.</text>
+<text x="55" y="957" font-size="21">OCR supplies readable image text, not general vision. Local hosting and scoped records are not a complete security certification.</text>
+</g></svg>

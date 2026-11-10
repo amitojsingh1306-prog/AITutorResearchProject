@@ -33,6 +33,8 @@ class Message(BaseModel):
     user_id: str
     role: str
     content: str
+    memory_trace: dict | None = None
+    image_attachment: dict | None = None
     timestamp: datetime
     session_id: str
 
@@ -47,6 +49,7 @@ class ChatMessageRequest(BaseModel):
     """User message sent to a conversation."""
 
     content: str = Field(min_length=1, max_length=20_000)
+    image_id: str | None = Field(default=None, min_length=1, max_length=64)
     session_id: str | None = Field(default=None, min_length=1, max_length=120)
 
 
@@ -56,3 +59,11 @@ class ChatMessageResponse(BaseModel):
     user_message: Message
     assistant_message: Message
     chat: ChatSummary
+
+
+class MessageUpdateRequest(BaseModel):
+    content: str = Field(min_length=1,max_length=20_000)
+
+
+class ForgetRequest(BaseModel):
+    target: str = Field(min_length=1,max_length=200)
