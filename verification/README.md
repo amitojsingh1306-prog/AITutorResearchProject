@@ -52,3 +52,14 @@ Without `--include-databases`, MySQL and Neo4j checks are skipped. Checks run se
 5. State what the check does and does not establish.
 
 The earlier `scripts/verify_lmstudio_connection.py` remains available so existing commands continue working.
+
+## Research-paper implementation guide
+
+See [paper_implementations/README.md](paper_implementations/README.md) for research ideas, actual production functions, limits and demonstration commands.
+
+```bash
+.venv/bin/python -B verification/paper_implementations/show_paper_code.py
+.venv/bin/python -B verification/paper_implementations/show_paper_code.py --paper rag
+```
+
+The viewer reads the actual source files without running models or changing saved chats.

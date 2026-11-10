@@ -1,0 +1,179 @@
+{
+  "purpose": "Read-only map from research ideas to actual production code. These are not full reproductions of the papers.",
+  "items": [
+    {
+      "id": "memgpt",
+      "title": "MemGPT: bounded context and external memory",
+      "status": "Inspired by the memory-tier idea; not a full MemGPT implementation.",
+      "source": "https://arxiv.org/abs/2310.08560",
+      "explain": "The backend keeps selected recent messages and older evidence within a finite prompt allowance. It does not implement model-controlled paging or the full MemGPT operating-system abstraction.",
+      "code": [
+        {
+          "file": "backend/services/chat_service.py",
+          "anchor": "history_budget =",
+          "radius": 14
+        },
+        {
+          "file": "backend/memory/semantic_chat.py",
+          "symbol": "token_upper_bound"
+        }
+      ],
+      "commands": [
+        "verification/verify_context.py"
+      ],
+      "limit": "The input estimator is a conservative UTF-8 byte bound, not exact tokenizer counting. There is no universal 70-percent paging rule here."
+    },
+    {
+      "id": "rag",
+      "title": "RAG: retrieve source text before generation",
+      "status": "A local retrieval-augmented pipeline; not the original jointly trained RAG model.",
+      "source": "https://arxiv.org/abs/2005.11401",
+      "explain": "Nomic embeds text, Chroma compares query and stored vectors, and Python sends the selected original words to Qwen. Qwen never reads Nomic vectors directly.",
+      "code": [
+        {
+          "file": "backend/memory/semantic_chat.py",
+          "symbol": "SemanticChatMemory.embed"
+        },
+        {
+          "file": "backend/memory/semantic_chat.py",
+          "symbol": "SemanticChatMemory.retrieve"
+        },
+        {
+          "file": "backend/services/chat_service.py",
+          "anchor": "below_similarity_threshold",
+          "radius": 11
+        }
+      ],
+      "commands": [
+        "verification/verify_nomic_embeds.py",
+        "verification/verify_chroma_storage.py",
+        "verification/verify_cosine.py",
+        "verification/verify_context.py"
+      ],
+      "limit": "Similarity is relevance, not correctness. A fetched candidate can be excluded by the cutoff or already included through recent history."
+    },
+    {
+      "id": "summary",
+      "title": "Summary memory: bounded older excerpts",
+      "status": "Our extractive summary baseline. Not a complete published memory system.",
+      "source": "https://arxiv.org/abs/2402.17753",
+      "explain": "Older learner excerpts are selected under a byte budget, while recent turns stay separate. Source IDs and a source-content signature support refresh after edits.",
+      "code": [
+        {
+          "file": "backend/memory/rolling_summary.py",
+          "symbol": "RollingSummary.context"
+        }
+      ],
+      "commands": [
+        "verification/verify_rolling_summary.py"
+      ],
+      "limit": "This copies and truncates source excerpts. Asking Qwen to summarize the chat is a different operation. It may omit important older facts."
+    },
+    {
+      "id": "mem0",
+      "title": "Mem0 connection: updating and removing remembered information",
+      "status": "Our mutation implementation addresses a related design concern; it does not reproduce Mem0 extraction/consolidation.",
+      "source": "https://arxiv.org/abs/2504.19413",
+      "explain": "Supported corrections and forgetting requests trigger backend operations on source and derived records. The model saying it forgot is not sufficient.",
+      "code": [
+        {
+          "file": "backend/memory/mutations.py",
+          "symbol": "MemoryMutations.control"
+        },
+        {
+          "file": "backend/memory/mutations.py",
+          "symbol": "MemoryMutations._apply"
+        }
+      ],
+      "commands": [
+        "verification/verify_mysql.py",
+        "verification/verify_neo4j.py"
+      ],
+      "limit": "The database checks cover selected mutation paths in isolated namespaces. They do not prove arbitrary natural-language deletion or all concurrency cases. We do not have separately retained facts surviving the current whole-session inactivity expiry."
+    },
+    {
+      "id": "amem",
+      "title": "A-MEM connection: linked memories and source evidence",
+      "status": "A restricted rule-based Neo4j implementation; not full A-MEM agentic memory evolution.",
+      "source": "https://arxiv.org/abs/2502.12110",
+      "explain": "Learner assertions, topics and source messages are linked. Supported later statements can deactivate old facts, and the retrieval path returns textual evidence.",
+      "code": [
+        {
+          "file": "backend/memory/graph_memory.py",
+          "symbol": "extract_facts"
+        },
+        {
+          "file": "backend/memory/graph_memory.py",
+          "symbol": "Neo4jMemory.retrieve"
+        }
+      ],
+      "commands": [
+        "verification/verify_neo4j.py"
+      ],
+      "limit": "Neo4j is our implementation choice, not a requirement of A-MEM. We do not implement unrestricted self-organizing notes, general inference, or permanent fact retention. Topic mentions alone are not learner facts."
+    },
+    {
+      "id": "locomo",
+      "title": "LoCoMo: questions, predictions and upstream scoring",
+      "status": "Our runner uses released data and downloaded upstream scoring functions.",
+      "source": "https://github.com/snap-research/locomo",
+      "explain": "The runner loads source history, builds context, generates using local Qwen, then scores against held-out references. F1, adversarial abstention, context time and generation request time are separate measurements.",
+      "code": [
+        {
+          "file": "scripts/run_panel_evaluation.py",
+          "anchor": "row['context_build_ms']",
+          "radius": 10
+        },
+        {
+          "file": "scripts/run_panel_evaluation.py",
+          "symbol": "summarize"
+        },
+        {
+          "file": "benchmark_data/locomo/upstream_evaluation.py",
+          "symbol": "f1_score"
+        },
+        {
+          "file": "benchmark_data/locomo/upstream_evaluation.py",
+          "symbol": "eval_question_answering"
+        }
+      ],
+      "commands": [
+        "verification/locomo_questions/show_questions.py --question 1 --answers",
+        "verification/verify_evaluation.py"
+      ],
+      "limit": "49 fixed questions x 4 modes x 3 trials = 588 predictions, not the full dataset. Upstream scorer code was downloaded, not invented by us. Re-scoring saved predictions is not a new model run."
+    },
+    {
+      "id": "engineering",
+      "title": "Supporting application code: SQL, OCR, instructions and retention",
+      "status": "Engineering support, not a claimed reproduction of a research paper.",
+      "source": "",
+      "explain": "JSON stores working records, MySQL keeps recoverable persistence, response blueprints supply instructions, and Tesseract supplies image text. Session expiry is a separate retention policy.",
+      "code": [
+        {
+          "file": "backend/database/mysql_repository.py",
+          "symbol": "MySQLChatRepository._write_json_file"
+        },
+        {
+          "file": "backend/services/response_blueprint.py",
+          "symbol": "select_template"
+        },
+        {
+          "file": "backend/memory/session_memory.py",
+          "symbol": "SessionMemory._touch"
+        },
+        {
+          "file": "backend/ocr/local_ocr.py",
+          "anchor": "class LocalOCR",
+          "radius": 9
+        }
+      ],
+      "commands": [
+        "verification/verify_mysql.py",
+        "verification/verify_blueprint.py",
+        "verification/verify_ocr_blueprint.py"
+      ],
+      "limit": "OCR extracts text rather than visual reasoning. Qwen reads instructions inserted by Python, not JSON files directly. The current timer expires tracked whole sessions after one hour of inactivity."
+    }
+  ]
+}
